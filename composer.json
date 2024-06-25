@@ -1,0 +1,52 @@
+{
+    "name": "terp/tapi",
+    "type": "project",
+    "description": "Common APIs related to users, auth, and different organisational entities required by all three API projects Transport Management System, Warehouse Management System and People Management System",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Pradyumna Das Roy",
+            "email": "pradyroy.in@gmail.com"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "intervention/image": "^2.7",
+        "laravel/framework": "^11.10",
+        "maatwebsite/excel": "^3.1",
+        "spatie/image-optimizer": "^1.7",
+        "tymon/jwt-auth": "^2.1"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.16",
+        "nunomaduro/collision": "^8.1",
+        "squizlabs/php_codesniffer": "^3.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
