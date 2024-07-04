@@ -3,6 +3,10 @@
 namespace App\Feature\Tenant\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TenantKycStoreRequest extends FormRequest
 {
@@ -13,9 +17,23 @@ class TenantKycStoreRequest extends FormRequest
      */
     public function authorize()
     {
-        // Authorization logic can be added here if needed
-        // For now, we'll just return true to allow all requests
-        return true;
+        return true; // Authorization logic can be added here if needed
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Extract user context from request attributes
+        $userContext = $this->attributes->get('userContext');
+
+        // Merge tenant_id from userContext into the request data
+        if ($userContext) {
+            $this->merge([
+                'tenant_id' => $userContext->tenantId,
+            ]);
+        }
     }
 
     /**
@@ -27,53 +45,104 @@ class TenantKycStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'required|exists:tenants,id',
+            'legal_name' => 'required|string|max:128',
+            'owner1_name' => 'required|string|max:48',
+            'photo1_url' => 'nullable|string|max:255',
+            'owner1_aadhaar' => 'nullable|string|max:16',
+            'owner1_aadhaar_url' => 'nullable|string|max:255',
+            'owner1_pan' => 'nullable|string|max:16',
+            'owner1_pan_url' => 'nullable|string|max:255',
+            'owner1_email' => 'nullable|string|email|max:64',
+            'owner1_mobile' => 'nullable|string|max:16',
+            'owner2_name' => 'nullable|string|max:48',
+            'photo2_url' => 'nullable|string|max:255',
+            'owner2_aadhaar' => 'nullable|string|max:16',
+            'owner2_aadhaar_url' => 'nullable|string|max:255',
+            'owner2_pan' => 'nullable|string|max:16',
+            'owner2_pan_url' => 'nullable|string|max:255',
+            'owner2_email' => 'nullable|string|email|max:64',
+            'owner2_mobile' => 'nullable|string|max:16',
+            'country' => 'nullable|string|max:64',
+            'state' => 'nullable|string|max:64',
+            'district' => 'nullable|string|max:64',
+            'taluka' => 'nullable|string|max:64',
+            'city' => 'nullable|string|max:64',
+            'pincode' => 'required|string|max:16',
+            'latitude' => 'nullable|string|max:16',
+            'longitude' => 'nullable|string|max:16',
+            'address' => 'required|string|max:255',
+            'address_reg' => 'nullable|string|max:512',
+            'addr_doc_url' => 'nullable|string|max:255',
             'gst_num' => 'nullable|string|max:16',
+            'gst_cert_url' => 'nullable|string|max:255',
             'cin_num' => 'nullable|string|max:24',
+            'company_reg_cert_url' => 'nullable|string|max:255',
             'pan_num' => 'nullable|string|max:16',
-            'bank_name' => 'required|string|max:32',
-            'bank_account_num' => 'required|string|max:24',
-            'bank_ifsc_code' => 'required|string|max:16',
-            'owner_aadhaar' => 'nullable|string|max:16',
-            'owner_pan' => 'nullable|string|max:16',
-            'owner_photo_url' => 'nullable|string|url|max:255',
-            'owner_email' => 'nullable|email|max:64',
-            'owner_mobile' => 'nullable|string|max:16',
-            'finance_head_email' => 'nullable|email|max:64',
-            'finance_head_mobile' => 'nullable|string|max:16',
+            'pan_card_url' => 'nullable|string|max:255',
+            'tan_num' => 'nullable|string|max:16',
+            'tan_card_url' => 'nullable|string|max:255',
+            'msme_num' => 'nullable|string|max:24',
+            'msme_reg_cert_url' => 'nullable|string|max:255',
+            'aadhaar_num' => 'nullable|string|max:16',
+            'aadhaar_card_url' => 'nullable|string|max:255',
+            'bank1_name' => 'nullable|string|max:32',
+            'bank1_accnt_holder' => 'nullable|string|max:32',
+            'bank1_account_type' => 'nullable|string|in:current,savings|max:24',
+            'bank1_account_num' => 'nullable|string|max:24',
+            'bank1_ifsc_code' => 'nullable|string|max:16',
+            'bank1_doc_url' => 'nullable|string|max:255',
+            'bank2_name' => 'nullable|string|max:32',
+            'bank2_accnt_holder' => 'nullable|string|max:32',
+            'bank2_account_type' => 'nullable|string|in:current,savings|max:24',
+            'bank2_account_num' => 'nullable|string|max:24',
+            'bank2_ifsc_code' => 'nullable|string|max:16',
+            'bank2_doc_url' => 'nullable|string|max:255',
+            'date_of_reg' => 'nullable|date',
+            'doc1_name' => 'nullable|string|max:48',
+            'doc1_url' => 'nullable|string|max:255',
+            'doc1_date' => 'nullable|date',
+            'doc2_name' => 'nullable|string|max:48',
+            'doc2_url' => 'nullable|string|max:255',
+            'doc2_date' => 'nullable|date',
+            'doc3_name' => 'nullable|string|max:48',
+            'doc3_url' => 'nullable|string|max:255',
+            'doc3_date' => 'nullable|date',
+            'doc4_name' => 'nullable|string|max:48',
+            'doc4_url' => 'nullable|string|max:255',
+            'doc4_date' => 'nullable|date',
+            'key_personnel1_name' => 'nullable|string|max:48',
+            'key_personnel1_job_title' => 'nullable|string|max:48',
+            'key_personnel1_mobile' => 'nullable|string|max:16',
+            'key_personnel1_email' => 'nullable|string|email|max:64',
+            'key_personnel2_name' => 'nullable|string|max:48',
+            'key_personnel2_job_title' => 'nullable|string|max:48',
+            'key_personnel2_mobile' => 'nullable|string|max:16',
+            'key_personnel2_email' => 'nullable|string|email|max:64',
+            'key_personnel3_name' => 'nullable|string|max:48',
+            'key_personnel3_job_title' => 'nullable|string|max:48',
+            'key_personnel3_mobile' => 'nullable|string|max:16',
+            'key_personnel3_email' => 'nullable|string|email|max:64',
+            'key_personnel4_name' => 'nullable|string|max:48',
+            'key_personnel4_job_title' => 'nullable|string|max:48',
+            'key_personnel4_mobile' => 'nullable|string|max:16',
+            'key_personnel4_email' => 'nullable|string|email|max:64',
+            'kyc_date' => 'nullable|date',
             'kyc_completed' => 'boolean',
+            'active' => 'boolean',
+            'status' => 'required|string|in:CREATED,APPROVED,REJECTED,PENDING_UPDATE,PENDING_APPROVAL|max:24',
+            'note' => 'nullable|string|max:255'
         ];
     }
 
     /**
-     * Get the error messages for the defined validation rules.
+     * Handle a failed validation attempt.
      *
-     * @return array
+     * @param Validator $validator
+     * @throws ValidationException
      */
-    public function messages()
+    protected function failedValidation(Validator $validator)
     {
-        return [
-            'tenant_id.required' => 'The tenant ID is required.',
-            'tenant_id.exists' => 'The tenant ID must exist in the tenants table.',
-            'gst_num.max' => 'The GST number must not exceed 16 characters.',
-            'cin_num.max' => 'The CIN number must not exceed 24 characters.',
-            'pan_num.max' => 'The PAN number must not exceed 16 characters.',
-            'bank_name.required' => 'The bank name is required.',
-            'bank_name.max' => 'The bank name must not exceed 32 characters.',
-            'bank_account_num.required' => 'The bank account number is required.',
-            'bank_account_num.max' => 'The bank account number must not exceed 24 characters.',
-            'bank_ifsc_code.required' => 'The bank IFSC code is required.',
-            'bank_ifsc_code.max' => 'The bank IFSC code must not exceed 16 characters.',
-            'owner_aadhaar.max' => 'The owner Aadhaar number must not exceed 16 characters.',
-            'owner_pan.max' => 'The owner PAN number must not exceed 16 characters.',
-            'owner_photo_url.url' => 'The owner photo URL must be a valid URL.',
-            'owner_photo_url.max' => 'The owner photo URL must not exceed 255 characters.',
-            'owner_email.email' => 'The owner email must be a valid email address.',
-            'owner_email.max' => 'The owner email must not exceed 64 characters.',
-            'owner_mobile.max' => 'The owner mobile number must not exceed 16 characters.',
-            'finance_head_email.email' => 'The finance head email must be a valid email address.',
-            'finance_head_email.max' => 'The finance head email must not exceed 64 characters.',
-            'finance_head_mobile.max' => 'The finance head mobile number must not exceed 16 characters.',
-            'kyc_completed.boolean' => 'The KYC completed field must be true or false.',
-        ];
+        Log::error('Validation failed for new tenant KYC data in TenantKycStoreRequest', $validator->errors()->toArray());
+        throw new ValidationException($validator);
     }
 }

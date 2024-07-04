@@ -1,56 +1,49 @@
 <?php
 
-namespace App\Feature\Office\Models;
+namespace App\Feature\Company\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Feature\Tenant\Models\Tenant;
-use App\Feature\Company\Models\Company;
-use App\Feature\Office\Models\CpKyc;
 use App\Feature\User\Models\User;
 
 /**
- * Class Office
+ * Class Company
  *
- * @package App\Feature\Office\Models
+ * @package App\Feature\Company\Models
  * @property int $id
  * @property int|null $tenant_id
- * @property string|null $company_tag
  * @property string $code
  * @property string $name
  * @property string|null $name_reg
- * @property string|null $gst_num
- * @property string|null $cin_num
- * @property bool $owned
- * @property string $o_type
- * @property int|null $cp_kyc_id
- * @property string|null $country
- * @property string|null $state
- * @property string|null $district
- * @property string|null $taluka
- * @property string|null $city
- * @property string $pincode
- * @property string $latitude
- * @property string $longitude
  * @property string $address
  * @property string|null $address_reg
+ * @property string|null $phone1
+ * @property string|null $phone2
+ * @property string|null $email1
+ * @property string|null $email2
+ * @property string|null $website
+ * @property string|null $gst_num
+ * @property string|null $cin_num
+ * @property string|null $msme_num
+ * @property string|null $pan_num
+ * @property string|null $tan_num
+ * @property string|null $logo_url
  * @property bool $active
- * @property string|null $description
- * @property int|null $parent_id
+ * @property int $seq_num
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
-class Office extends Model
+class Company extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'offices';
+    protected $table = 'companies';
 
     /**
      * The primary key associated with the table.
@@ -87,28 +80,24 @@ class Office extends Model
      */
     protected $fillable = [
         'tenant_id',
-        'company_tag',
         'code',
         'name',
         'name_reg',
-        'gst_num',
-        'cin_num',
-        'owned',
-        'o_type',
-        'cp_kyc_id',
-        'country',
-        'state',
-        'district',
-        'taluka',
-        'city',
-        'pincode',
-        'latitude',
-        'longitude',
         'address',
         'address_reg',
+        'phone1',
+        'phone2',
+        'email1',
+        'email2',
+        'website',
+        'gst_num',
+        'cin_num',
+        'msme_num',
+        'pan_num',
+        'tan_num',
+        'logo_url',
         'active',
-        'description',
-        'parent_id',
+        'seq_num',
         'created_by',
         'updated_by',
     ];
@@ -119,12 +108,12 @@ class Office extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'owned' => 'boolean',
         'active' => 'boolean',
+        'seq_num' => 'integer',
     ];
 
     /**
-     * Get the tenant that owns the office.
+     * Get the tenant that owns the company.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -134,47 +123,7 @@ class Office extends Model
     }
 
     /**
-     * Get the company that owns the office.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class, 'company_tag', 'code');
-    }
-
-    /**
-     * Get the CP KYC that owns the office.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function cpKyc(): BelongsTo
-    {
-        return $this->belongsTo(CpKyc::class, 'cp_kyc_id');
-    }
-
-    /**
-     * Get the parent office.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function parent(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'parent_id');
-    }
-
-    /**
-     * Get the child offices.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function children(): HasMany
-    {
-        return $this->hasMany(self::class, 'parent_id');
-    }
-
-    /**
-     * Get the user who created the office.
+     * Get the user who created the company.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -184,7 +133,7 @@ class Office extends Model
     }
 
     /**
-     * Get the user who updated the office.
+     * Get the user who updated the company.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */

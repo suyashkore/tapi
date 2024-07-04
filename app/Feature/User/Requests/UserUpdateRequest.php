@@ -151,7 +151,7 @@ class UserUpdateRequest extends FormRequest
             'last_login' => 'nullable|date',
             'last_password_reset' => 'nullable|date',
             'failed_login_attempts' => 'nullable|integer|min:0',
-            'active' => 'boolean',
+            'active' => 'sometimes|boolean',
             'remarks' => 'nullable|string|max:255'
         ];
     }

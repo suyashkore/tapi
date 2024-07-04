@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Feature\Office\Requests;
+namespace App\Feature\Company\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -9,13 +9,13 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Class OfficeStoreRequest
+ * Class CompanyStoreRequest
  *
- * Handles validation for storing a new office.
+ * Handles validation for storing a new company.
  *
- * @package App\Feature\Office\Requests
+ * @package App\Feature\Company\Requests
  */
-class OfficeStoreRequest extends FormRequest
+class CompanyStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -52,35 +52,37 @@ class OfficeStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
             'code' => [
                 'required',
                 'string',
                 'max:16',
-                Rule::unique('offices')->where(function ($query) {
+                Rule::unique('companies')->where(function ($query) {
                     return $query->where('tenant_id', $this->tenant_id);
-                })
+                }),
             ],
             'name' => 'required|string|max:64',
             'name_reg' => 'nullable|string|max:128',
-            'gst_num' => 'nullable|string|max:16',
-            'cin_num' => 'nullable|string|max:24',
-            'owned' => 'boolean',
-            'o_type' => 'required|string|in:HQ,REG_HQ,BACK_OFFICE,BRANCH,HUB,WAREHOUSE|max:24',
-            'cp_kyc_id' => 'nullable|exists:cp_kyc,id',
-            'country' => 'nullable|string|max:64',
-            'state' => 'nullable|string|max:64',
-            'district' => 'nullable|string|max:64',
-            'taluka' => 'nullable|string|max:64',
-            'city' => 'nullable|string|max:64',
-            'pincode' => 'required|string|max:16',
-            'latitude' => 'required|string|max:16',
-            'longitude' => 'required|string|max:16',
             'address' => 'required|string|max:255',
             'address_reg' => 'nullable|string|max:512',
+            'phone1' => 'nullable|string|max:16',
+            'phone2' => 'nullable|string|max:16',
+            'email1' => 'nullable|string|max:64',
+            'email2' => 'nullable|string|max:64',
+            'website' => 'nullable|string|max:128',
+            'gst_num' => 'nullable|string|max:16',
+            'cin_num' => 'nullable|string|max:24',
+            'msme_num' => 'nullable|string|max:24',
+            'pan_num' => 'nullable|string|max:16',
+            'tan_num' => 'nullable|string|max:16',
+            'logo_url' => 'nullable|string|max:255',
             'active' => 'boolean',
-            'description' => 'nullable|string|max:255',
-            'parent_id' => 'nullable|exists:offices,id',
+            'seq_num' => [
+                'required',
+                'integer',
+                Rule::unique('companies')->where(function ($query) {
+                    return $query->where('tenant_id', $this->tenant_id);
+                }),
+            ],
             'created_by' => 'nullable|exists:users,id',
             'updated_by' => 'nullable|exists:users,id'
         ];
@@ -94,7 +96,7 @@ class OfficeStoreRequest extends FormRequest
      */
     protected function failedValidation(Validator $validator)
     {
-        Log::error('Validation failed for new office request data in OfficeStoreRequest', $validator->errors()->toArray());
+        Log::error('Validation failed for new company request data in CompanyStoreRequest', $validator->errors()->toArray());
         throw new ValidationException($validator);
     }
 }
