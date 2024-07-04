@@ -302,25 +302,4 @@ class CpKyc extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
-
-    /**
-     * Get the offices that belong to this CP KYC.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getOffices()
-    {
-        return $this->offices()->get();
-    }
-
-    /**
-     * Get the offices that belong to this CP KYC for a given tenant.
-     *
-     * @param int $tenantId
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getOfficesForTenant(int $tenantId)
-    {
-        return $this->offices()->where('tenant_id', $tenantId)->get();
-    }
 }

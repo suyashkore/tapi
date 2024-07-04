@@ -5,8 +5,6 @@ namespace App\Feature\Customer\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Class CustomerStoreRequest
@@ -24,7 +22,7 @@ class CustomerStoreRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        return true; // Authorization logic can be added here if needed
     }
 
     /**
@@ -50,22 +48,30 @@ class CustomerStoreRequest extends FormRequest
      */
     public function rules()
     {
-        Log::debug('Validating new customer request data in CustomerStoreRequest');
-
         return [
-            'tenant_id' => 'required|exists:tenants,id',
-            'parent_id' => 'nullable|string|exists:customers,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
+            'company_tag' => 'nullable|exists:companies,code',
+            'parent_id' => 'nullable|exists:customers,id',
+            'code' => [
+                'required',
+                'string',
+                'max:16',
+                Rule::unique('customers')->where(function ($query) {
+                    return $query->where('tenant_id', $this->tenant_id);
+                })
+            ],
             'name' => 'required|string|max:128',
             'name_reg' => 'nullable|string|max:255',
             'payment_types' => 'required|json',
             'industry_type' => 'nullable|string|max:128',
-            'customer_type' => 'nullable|string|max:24',
-            'pan' => 'nullable|string|max:16',
+            'c_type' => 'required|string|in:CONTRACTUAL,RETAIL|max:16',
+            'c_subtype' => 'nullable|string|in:CONSIGNOR,CONSIGNEE|max:24',
+            'pan_num' => 'nullable|string|max:16',
             'gst_num' => 'nullable|string|max:16',
-            'cin_num' => 'nullable|string|max:24',
             'country' => 'nullable|string|max:64',
             'state' => 'nullable|string|max:64',
             'district' => 'nullable|string|max:64',
+            'taluka' => 'nullable|string|max:64',
             'city' => 'required|string|max:64',
             'pincode' => 'required|string|max:16',
             'latitude' => 'nullable|string|max:16',
@@ -74,30 +80,28 @@ class CustomerStoreRequest extends FormRequest
             'address_reg' => 'nullable|string|max:512',
             'mobile' => 'nullable|string|max:16',
             'tel_num' => 'nullable|string|max:16',
-            'email' => 'nullable|string|max:64',
+            'email' => 'nullable|string|email|max:64',
             'billing_contact_person' => 'nullable|string|max:48',
             'billing_mobile' => 'required|string|max:16',
-            'billing_email' => 'required|string|max:64',
+            'billing_email' => 'required|string|email|max:64',
             'billing_address' => 'required|string|max:255',
             'billing_address_reg' => 'nullable|string|max:512',
+            'primary_servicing_office' => 'required|string|exists:offices,code',
             'other_servicing_offices' => 'nullable|json',
-            'primary_servicing_office' => 'required|string|exists:offices,id',
             'erp_entry_date' => 'nullable|date',
             'active' => 'boolean',
-            'created_by' => 'nullable|exists:users,id',
-            'updated_by' => 'nullable|exists:users,id',
         ];
     }
 
     /**
      * Handle a failed validation attempt.
      *
-     * @param Validator $validator
-     * @throws ValidationException
+     * @param \Illuminate\Contracts\Validation\Validator $validator
+     * @throws \Illuminate\Validation\ValidationException
      */
-    protected function failedValidation(Validator $validator)
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         Log::error('Validation failed for new customer request data in CustomerStoreRequest', $validator->errors()->toArray());
-        throw new ValidationException($validator);
+        throw new \Illuminate\Validation\ValidationException($validator);
     }
 }

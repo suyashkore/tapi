@@ -5,30 +5,36 @@ namespace App\Feature\Customer\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use App\Feature\Tenant\Models\Tenant;
-use App\Feature\User\Models\User;
 use App\Feature\Office\Models\Office;
+use App\Feature\Company\Models\Company;
+use App\Feature\User\Models\User;
 
 /**
  * Class Customer
  *
  * @package App\Feature\Customer\Models
- * @property string $id
- * @property int $tenant_id
+ * @property int $id
+ * @property int|null $tenant_id
+ * @property string|null $company_tag
  * @property string|null $parent_id
+ * @property string $code
  * @property string $name
  * @property string|null $name_reg
- * @property string $payment_types
+ * @property array $payment_types
  * @property string|null $industry_type
- * @property string|null $customer_type
- * @property string|null $pan
+ * @property string $c_type
+ * @property string|null $c_subtype
+ * @property string|null $pan_num
  * @property string|null $gst_num
- * @property string|null $cin_num
  * @property string|null $country
  * @property string|null $state
  * @property string|null $district
- * @property string $city
- * @property string $pincode
+ * @property string|null $taluka
+ * @property string|null $city
+ * @property string|null $pincode
  * @property string|null $latitude
  * @property string|null $longitude
  * @property string|null $address
@@ -41,14 +47,14 @@ use App\Feature\Office\Models\Office;
  * @property string $billing_email
  * @property string $billing_address
  * @property string|null $billing_address_reg
- * @property string|null $other_servicing_offices
  * @property string $primary_servicing_office
- * @property \Illuminate\Support\Carbon|null $erp_entry_date
+ * @property array|null $other_servicing_offices
+ * @property Carbon|null $erp_entry_date
  * @property bool $active
  * @property int|null $created_by
  * @property int|null $updated_by
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Customer extends Model
 {
@@ -71,14 +77,14 @@ class Customer extends Model
      *
      * @var bool
      */
-    public $incrementing = false;
+    public $incrementing = true;
 
     /**
      * The "type" of the auto-incrementing ID.
      *
      * @var string
      */
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     /**
      * Indicates if the model should be timestamped.
@@ -90,23 +96,25 @@ class Customer extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var array<int, string>
      */
     protected $fillable = [
-        'id',
         'tenant_id',
+        'company_tag',
         'parent_id',
+        'code',
         'name',
         'name_reg',
         'payment_types',
         'industry_type',
-        'customer_type',
-        'pan',
+        'c_type',
+        'c_subtype',
+        'pan_num',
         'gst_num',
-        'cin_num',
         'country',
         'state',
         'district',
+        'taluka',
         'city',
         'pincode',
         'latitude',
@@ -121,8 +129,8 @@ class Customer extends Model
         'billing_email',
         'billing_address',
         'billing_address_reg',
-        'other_servicing_offices',
         'primary_servicing_office',
+        'other_servicing_offices',
         'erp_entry_date',
         'active',
         'created_by',
@@ -135,10 +143,10 @@ class Customer extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'payment_types' => 'json',
-        'other_servicing_offices' => 'json',
-        'active' => 'boolean',
+        'payment_types' => 'array',
+        'other_servicing_offices' => 'array',
         'erp_entry_date' => 'datetime',
+        'active' => 'boolean',
     ];
 
     /**
@@ -148,7 +156,47 @@ class Customer extends Model
      */
     public function tenant(): BelongsTo
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    /**
+     * Get the company that owns the customer.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_tag', 'code');
+    }
+
+    /**
+     * Get the parent customer.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /**
+     * Get the child customers.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Get the primary servicing office.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function primaryServicingOffice(): HasOne
+    {
+        return $this->hasOne(Office::class, 'id', 'primary_servicing_office');
     }
 
     /**
@@ -169,35 +217,5 @@ class Customer extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    /**
-     * Get the parent customer.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function parent(): BelongsTo
-    {
-        return $this->belongsTo(Customer::class, 'parent_id');
-    }
-
-    /**
-     * Get the child customers.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function children(): HasMany
-    {
-        return $this->hasMany(Customer::class, 'parent_id');
-    }
-
-    /**
-     * Get the primary servicing office.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function primaryServicingOffice(): BelongsTo
-    {
-        return $this->belongsTo(Office::class, 'primary_servicing_office');
     }
 }
