@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Class LoaderRate
+ * Class DriverRate
  *
  * @package App\Feature\Contract\Models
  * @property int $id
@@ -20,16 +20,20 @@ use Illuminate\Support\Carbon;
  * @property int|null $vendor_id
  * @property string $vendor_name
  * @property string $default_rate_type
- * @property float|null $reg_pkg_rate
- * @property float|null $crossing_pkg_rate
- * @property float|null $reg_weight_rate
- * @property float|null $crossing_weight_rate
- * @property float|null $monthly_sal
- * @property float|null $daily_allowance
- * @property float|null $daily_wage
- * @property int|null $daily_wage_pkg_capping
- * @property int|null $daily_wage_weight_capping
+ * @property float|null $daily_rate
+ * @property float|null $hourly_rate
  * @property float|null $overtime_hourly_rate
+ * @property float|null $daily_allowance
+ * @property float|null $per_km_rate
+ * @property float|null $per_extra_km_rate
+ * @property float|null $night_halt_rate
+ * @property float|null $per_trip_rate
+ * @property float|null $trip_allowance
+ * @property float|null $incentive_per_trip
+ * @property float|null $monthly_sal
+ * @property float|null $monthly_incentive
+ * @property float|null $per_trip_penalty_percent
+ * @property float|null $per_trip_penalty_fixed_amount
  * @property bool $active
  * @property string $status
  * @property string|null $note
@@ -40,14 +44,14 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-class LoaderRate extends Model
+class DriverRate extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'loader_rates';
+    protected $table = 'driver_rates';
 
     /**
      * The primary key associated with the table.
@@ -88,16 +92,20 @@ class LoaderRate extends Model
         'vendor_id',
         'vendor_name',
         'default_rate_type',
-        'reg_pkg_rate',
-        'crossing_pkg_rate',
-        'reg_weight_rate',
-        'crossing_weight_rate',
-        'monthly_sal',
-        'daily_allowance',
-        'daily_wage',
-        'daily_wage_pkg_capping',
-        'daily_wage_weight_capping',
+        'daily_rate',
+        'hourly_rate',
         'overtime_hourly_rate',
+        'daily_allowance',
+        'per_km_rate',
+        'per_extra_km_rate',
+        'night_halt_rate',
+        'per_trip_rate',
+        'trip_allowance',
+        'incentive_per_trip',
+        'monthly_sal',
+        'monthly_incentive',
+        'per_trip_penalty_percent',
+        'per_trip_penalty_fixed_amount',
         'active',
         'status',
         'note',
@@ -116,16 +124,20 @@ class LoaderRate extends Model
         'tenant_id' => 'integer',
         'contracting_office_id' => 'integer',
         'vendor_id' => 'integer',
-        'reg_pkg_rate' => 'float',
-        'crossing_pkg_rate' => 'float',
-        'reg_weight_rate' => 'float',
-        'crossing_weight_rate' => 'float',
-        'monthly_sal' => 'float',
-        'daily_allowance' => 'float',
-        'daily_wage' => 'float',
-        'daily_wage_pkg_capping' => 'integer',
-        'daily_wage_weight_capping' => 'integer',
+        'daily_rate' => 'float',
+        'hourly_rate' => 'float',
         'overtime_hourly_rate' => 'float',
+        'daily_allowance' => 'float',
+        'per_km_rate' => 'float',
+        'per_extra_km_rate' => 'float',
+        'night_halt_rate' => 'float',
+        'per_trip_rate' => 'float',
+        'trip_allowance' => 'float',
+        'incentive_per_trip' => 'float',
+        'monthly_sal' => 'float',
+        'monthly_incentive' => 'float',
+        'per_trip_penalty_percent' => 'float',
+        'per_trip_penalty_fixed_amount' => 'float',
         'active' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
@@ -136,7 +148,7 @@ class LoaderRate extends Model
     ];
 
     /**
-     * Get the tenant that owns the loader rate.
+     * Get the tenant that owns the driver rate.
      *
      * @return BelongsTo
      */
@@ -146,7 +158,7 @@ class LoaderRate extends Model
     }
 
     /**
-     * Get the contracting office that owns the loader rate.
+     * Get the contracting office that owns the driver rate.
      *
      * @return BelongsTo
      */
@@ -156,7 +168,7 @@ class LoaderRate extends Model
     }
 
     /**
-     * Get the vendor that owns the loader rate.
+     * Get the vendor that owns the driver rate.
      *
      * @return BelongsTo
      */
@@ -166,7 +178,7 @@ class LoaderRate extends Model
     }
 
     /**
-     * Get the user who created the loader rate.
+     * Get the user who created the driver rate.
      *
      * @return BelongsTo
      */
@@ -176,7 +188,7 @@ class LoaderRate extends Model
     }
 
     /**
-     * Get the user who updated the loader rate.
+     * Get the user who updated the driver rate.
      *
      * @return BelongsTo
      */
