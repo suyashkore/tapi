@@ -50,7 +50,7 @@ class CpKycStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|string|max:16|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'legal_name' => 'required|string|max:128',
             'owner1_name' => 'required|string|max:48',
             'photo1_url' => 'nullable|string|max:255',

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Feature\Tenant\Models\Tenant;
 use App\Feature\User\Models\User;
 use App\Feature\Office\Models\Office;
+use App\Feature\Company\Models\Company;
 
 /**
  * Class CpKyc
@@ -249,6 +250,7 @@ class CpKyc extends Model
      */
     protected $casts = [
         'tenant_id' => 'integer',
+        'company_tag' => 'integer',
         'kyc_completed' => 'boolean',
         'active' => 'boolean',
         'created_by' => 'integer',
@@ -281,6 +283,16 @@ class CpKyc extends Model
     public function offices(): HasMany
     {
         return $this->hasMany(Office::class, 'cp_kyc_id');
+    }
+
+    /**
+     * Get the company that owns the CpKyc.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_tag');
     }
 
     /**

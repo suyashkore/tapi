@@ -20,9 +20,9 @@ class CreateOfficesTable extends Migration
             $table->unsignedSmallInteger('tenant_id')->nullable();
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
 
-            // Foreign key from companies table, nullable
-            $table->string('company_tag', 16)->nullable();
-            $table->foreign('company_tag')->references('code')->on('companies')->onDelete('set null');
+            // Foreign key from companies table
+            $table->unsignedSmallInteger('company_tag')->nullable();
+            $table->foreign('company_tag')->references('id')->on('companies')->onDelete('set null');
 
             // Office details
             $table->string('code', 16); // Mandatory unique code for a given tenant

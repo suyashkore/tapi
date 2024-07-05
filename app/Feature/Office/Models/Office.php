@@ -119,6 +119,7 @@ class Office extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'company_tag' => 'integer',
         'owned' => 'boolean',
         'active' => 'boolean',
     ];
@@ -140,7 +141,7 @@ class Office extends Model
      */
     public function company(): BelongsTo
     {
-        return $this->belongsTo(Company::class, 'company_tag', 'code');
+        return $this->belongsTo(Company::class, 'company_tag');
     }
 
     /**

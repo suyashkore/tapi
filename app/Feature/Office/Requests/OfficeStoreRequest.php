@@ -52,7 +52,7 @@ class OfficeStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'code' => [
                 'required',
                 'string',
