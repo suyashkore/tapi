@@ -30,7 +30,6 @@ class VendorStoreRequest extends FormRequest
         if ($userContext) {
             $this->merge([
                 'tenant_id' => $userContext->tenantId,
-                'created_by' => $userContext->userId,
             ]);
         }
     }
@@ -63,7 +62,6 @@ class VendorStoreRequest extends FormRequest
             'contracting_office' => 'required|string|exists:offices,code',
             'erp_code' => 'nullable|string|max:24',
             'active' => 'boolean',
-            'created_by' => 'nullable|exists:users,id',
         ];
     }
 

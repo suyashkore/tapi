@@ -30,7 +30,6 @@ class VendorKycStoreRequest extends FormRequest
         if ($userContext) {
             $this->merge([
                 'tenant_id' => $userContext->tenantId,
-                'created_by' => $userContext->userId,
             ]);
         }
     }
@@ -137,7 +136,6 @@ class VendorKycStoreRequest extends FormRequest
             'active' => 'boolean',
             'status' => 'required|string|in:CREATED,APPROVED,REJECTED,PENDING_UPDATE,PENDING_APPROVAL|max:24',
             'note' => 'nullable|string|max:255',
-            'created_by' => 'nullable|exists:users,id',
         ];
     }
 

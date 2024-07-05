@@ -30,7 +30,6 @@ class VendorKycUpdateRequest extends FormRequest
         if ($userContext) {
             $this->merge([
                 'tenant_id' => $userContext->tenantId,
-                'updated_by' => $userContext->userId,
             ]);
         }
     }
@@ -139,7 +138,6 @@ class VendorKycUpdateRequest extends FormRequest
             'active' => 'boolean',
             'status' => 'sometimes|required|string|in:CREATED,APPROVED,REJECTED,PENDING_UPDATE,PENDING_APPROVAL|max:24',
             'note' => 'nullable|string|max:255',
-            'updated_by' => 'nullable|exists:users,id',
         ];
     }
 

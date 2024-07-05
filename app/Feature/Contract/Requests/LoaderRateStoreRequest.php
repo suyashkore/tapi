@@ -30,9 +30,15 @@ class LoaderRateStoreRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        $this->merge([
-            'created_by' => auth()->id(),
-        ]);
+        // Extract user context from request attributes
+        $userContext = $this->attributes->get('userContext');
+
+        // Merge tenant_id from userContext into the request data
+        if ($userContext) {
+            $this->merge([
+                'tenant_id' => $userContext->tenantId,
+            ]);
+        }
     }
 
     /**
