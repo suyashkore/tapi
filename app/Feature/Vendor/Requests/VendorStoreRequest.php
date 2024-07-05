@@ -43,7 +43,7 @@ class VendorStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'code' => [
                 'required',
                 'string',
@@ -59,7 +59,7 @@ class VendorStoreRequest extends FormRequest
             'v_type' => 'required|string|in:FUEL_VENDOR,FLEET_VENDOR,LOADER,DRIVER,OTHERS|max:24',
             'mobile' => 'required|string|max:16',
             'email' => 'nullable|string|email|max:64',
-            'contracting_office' => 'required|string|exists:offices,code',
+            'contracting_office_id' => 'required|exists:offices,id',
             'erp_code' => 'nullable|string|max:24',
             'active' => 'boolean',
         ];

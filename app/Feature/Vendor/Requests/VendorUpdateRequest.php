@@ -45,7 +45,7 @@ class VendorUpdateRequest extends FormRequest
 
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'code' => [
                 'sometimes',
                 'string',
@@ -61,7 +61,7 @@ class VendorUpdateRequest extends FormRequest
             'v_type' => 'sometimes|required|string|in:FUEL_VENDOR,FLEET_VENDOR,LOADER,DRIVER,OTHERS|max:24',
             'mobile' => 'sometimes|required|string|max:16',
             'email' => 'nullable|string|email|max:64',
-            'contracting_office' => 'sometimes|required|string|exists:offices,code',
+            'contracting_office_id' => 'sometimes|required|exists:offices,id',
             'erp_code' => 'nullable|string|max:24',
             'active' => 'boolean',
         ];

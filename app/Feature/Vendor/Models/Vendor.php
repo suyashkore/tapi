@@ -100,6 +100,7 @@ class Vendor extends Model
      */
     protected $casts = [
         'tenant_id' => 'integer',
+        'company_tag' => 'integer',
         'active' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer',

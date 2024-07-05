@@ -14,9 +14,17 @@ class CreateVendorKycTable extends Migration
     public function up()
     {
         Schema::create('vendor_kyc', function (Blueprint $table) {
-            $table->id(); // Primary key
-            $table->unsignedSmallInteger('tenant_id')->nullable(); // Foreign key from tenant
-            $table->unsignedMediumInteger('vendor_id'); // Foreign key from vendor
+            // Primary key: unsigned medium integer, auto-increment
+            $table->unsignedMediumInteger('id')->autoIncrement();
+
+            // Foreign key from tenants table, nullable
+            $table->unsignedSmallInteger('tenant_id')->nullable();
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
+
+            // Foreign key from vendors table, mandatory
+            $table->unsignedMediumInteger('vendor_id');
+            $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
+
             $table->string('v_type', 24); // Vendor type
             $table->string('legal_name', 128); // Legal name
             $table->string('owner1_name', 48); // Owner1 name
@@ -104,6 +112,8 @@ class CreateVendorKycTable extends Migration
             $table->string('key_personnel4_job_title', 48)->nullable(); // Key personnel4 job title
             $table->string('key_personnel4_mobile', 16)->nullable(); // Key personnel4 mobile
             $table->string('key_personnel4_email', 64)->nullable(); // Key personnel4 email
+
+            // Additional details
             $table->dateTime('kyc_date')->nullable(); // KYC date
             $table->boolean('kyc_completed')->default(false); // KYC completed
             $table->boolean('active')->default(false); // Active status
@@ -113,17 +123,13 @@ class CreateVendorKycTable extends Migration
             // Foreign keys for created_by and updated_by
             $table->unsignedMediumInteger('created_by')->nullable();
             $table->unsignedMediumInteger('updated_by')->nullable();
-
-            // Timestamps
-            $table->timestamps();
-
-            // Foreign key constraints
-            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
-            $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
 
-            // Indexes
+            // Timestamps for created_at and updated_at fields, auto-populated by the database
+            $table->timestamps();
+
+            // Indexes for faster queries
             $table->index('tenant_id');
             $table->index('vendor_id');
         });
@@ -137,10 +143,13 @@ class CreateVendorKycTable extends Migration
     public function down()
     {
         Schema::table('vendor_kyc', function (Blueprint $table) {
+            // Drop foreign key constraints
             $table->dropForeign(['tenant_id']);
             $table->dropForeign(['vendor_id']);
             $table->dropForeign(['created_by']);
             $table->dropForeign(['updated_by']);
+
+            // Drop indexes
             $table->dropIndex(['tenant_id']);
             $table->dropIndex(['vendor_id']);
         });
