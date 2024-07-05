@@ -129,7 +129,7 @@ class Customer extends Model
         'billing_email',
         'billing_address',
         'billing_address_reg',
-        'primary_servicing_office',
+        'primary_servicing_office_id',
         'other_servicing_offices',
         'erp_entry_date',
         'active',
@@ -143,7 +143,9 @@ class Customer extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'company_tag' => 'integer',
         'payment_types' => 'array',
+        'primary_servicing_office_id' => 'integer',
         'other_servicing_offices' => 'array',
         'erp_entry_date' => 'datetime',
         'active' => 'boolean',
@@ -166,7 +168,7 @@ class Customer extends Model
      */
     public function company(): BelongsTo
     {
-        return $this->belongsTo(Company::class, 'company_tag', 'code');
+        return $this->belongsTo(Company::class, 'company_tag');
     }
 
     /**
@@ -190,13 +192,13 @@ class Customer extends Model
     }
 
     /**
-     * Get the primary servicing office.
+     * Get the primary servicing office that serves the Customer.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
-    public function primaryServicingOffice(): HasOne
+    public function primaryServicingOffice(): BelongsTo
     {
-        return $this->hasOne(Office::class, 'id', 'primary_servicing_office');
+        return $this->belongsTo(Office::class, 'primary_servicing_office_id');
     }
 
     /**

@@ -50,7 +50,7 @@ class CustomerStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'parent_id' => 'nullable|exists:customers,id',
             'code' => [
                 'required',
@@ -86,7 +86,7 @@ class CustomerStoreRequest extends FormRequest
             'billing_email' => 'required|string|email|max:64',
             'billing_address' => 'required|string|max:255',
             'billing_address_reg' => 'nullable|string|max:512',
-            'primary_servicing_office' => 'required|string|exists:offices,code',
+            'primary_servicing_office_id' => 'required|exists:offices,id',
             'other_servicing_offices' => 'nullable|json',
             'erp_entry_date' => 'nullable|date',
             'active' => 'boolean',

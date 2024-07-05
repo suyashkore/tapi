@@ -52,7 +52,7 @@ class CustomerUpdateRequest extends FormRequest
 
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'company_tag' => 'nullable|exists:companies,code',
+            'company_tag' => 'nullable|exists:companies,id',
             'parent_id' => 'nullable|exists:customers,id',
             'code' => [
                 'sometimes',
@@ -88,7 +88,7 @@ class CustomerUpdateRequest extends FormRequest
             'billing_email' => 'sometimes|required|string|email|max:64',
             'billing_address' => 'sometimes|required|string|max:255',
             'billing_address_reg' => 'nullable|string|max:512',
-            'primary_servicing_office' => 'sometimes|required|string|exists:offices,code',
+            'primary_servicing_office_id' => 'sometimes|required|exists:offices,id',
             'other_servicing_offices' => 'nullable|json',
             'erp_entry_date' => 'nullable|date',
             'active' => 'boolean',
