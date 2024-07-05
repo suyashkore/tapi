@@ -129,6 +129,7 @@ class StationCoverage extends Model
     protected $casts = [
         'oda' => 'boolean',
         'active' => 'boolean',
+        'servicing_office_id' => 'integer',
         'service_office_tat' => 'integer',
         'servicing_office_dist' => 'integer',
         'route_sequence' => 'integer',
