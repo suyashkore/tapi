@@ -395,4 +395,20 @@ class UserService
             throw $e;
         }
     }
+
+    /**
+     * Reset the password of a user.
+     *
+     * @param int $tenantId
+     * @param int $userId
+     * @param string $newPassword
+     * @return void
+     */
+    public function resetUserPassword(int $tenantId, int $userId, string $newPassword): void
+    {
+        Log::info("Resetting password for user ID: $userId in tenant ID: $tenantId");
+
+        $hashedPassword = Hash::make($newPassword);
+        $this->userRepository->updateUserPassword($tenantId, $userId, $hashedPassword);
+    }
 }

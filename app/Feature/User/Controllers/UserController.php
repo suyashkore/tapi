@@ -2,6 +2,7 @@
 
 namespace App\Feature\User\Controllers;
 
+use App\Feature\User\Requests\AdminResetPasswordRequest;
 use App\Feature\User\Requests\UserStoreRequest;
 use App\Feature\User\Requests\UserUpdateRequest;
 use App\Feature\Shared\Requests\UploadImageRequest;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\JsonResponse;
 
 /**
  * Class UserController
@@ -362,6 +364,22 @@ class UserController extends Controller
             Log::error('Failed to export xlsx in UserController@exportXlsx: ' . $e->getMessage());
             return response()->json(['message' => 'Export failed'], 500);
         }
+    }
+
+    /**
+     * Admin reset password for a user.
+     *
+     * @param AdminResetPasswordRequest $request
+     * @return JsonResponse
+     */
+    public function adminResetPassword(AdminResetPasswordRequest $request): JsonResponse
+    {
+        Log::info('Admin requested password reset for user ID: ' . $request->user_id);
+
+        $data = $request->validated();
+        $this->userService->resetUserPassword($data['tenant_id'], $data['user_id'], $data['new_password']);
+
+        return response()->json(['message' => 'Password reset successfully'], 200);
     }
 
 }
