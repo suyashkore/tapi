@@ -14,7 +14,7 @@ class CreateCpKycTable extends Migration
     public function up()
     {
         Schema::create('cp_kyc', function (Blueprint $table) {
-            $table->id(); // Primary key: unsigned integer, auto-increment
+            $table->mediumIncrements('id'); // Primary key: unsigned medium integer, auto-increment
 
             // Foreign key from tenants table, nullable
             $table->unsignedSmallInteger('tenant_id')->nullable();

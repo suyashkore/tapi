@@ -32,7 +32,7 @@ class CreateOfficesTable extends Migration
             $table->string('cin_num', 24)->nullable(); // CIN number
             $table->boolean('owned')->default(true); // Owned status
             $table->string('o_type', 24); // Office type
-            $table->unsignedInteger('cp_kyc_id')->nullable(); // Foreign key from cp_kyc table
+            $table->unsignedMediumInteger('cp_kyc_id')->nullable(); // Foreign key from cp_kyc table
             $table->foreign('cp_kyc_id')->references('id')->on('cp_kyc')->onDelete('set null');
             $table->string('country', 64)->nullable(); // Country
             $table->string('state', 64)->nullable(); // State
