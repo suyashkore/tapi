@@ -43,4 +43,7 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to export Users to an XLSX file
     Route::get('/export/xlsx', [UserController::class, 'exportXlsx'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
+    // Route to reset password by admin user
+    Route::put('/admin/resetpassword', [UserController::class, 'adminResetPassword'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
+
 });

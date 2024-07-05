@@ -316,4 +316,21 @@ class UserRepository
         }
         return $user->delete();
     }
+
+    /**
+     * Update the password of a user.
+     *
+     * @param int $tenantId
+     * @param int $userId
+     * @param string $hashedPassword
+     * @return void
+     */
+    public function updateUserPassword(int $tenantId, int $userId, string $hashedPassword): void
+    {
+        Log::info("Updating password for user ID: $userId in tenant ID: $tenantId");
+
+        User::where('tenant_id', $tenantId)
+            ->where('id', $userId)
+            ->update(['password_hash' => $hashedPassword]);
+    }
 }
