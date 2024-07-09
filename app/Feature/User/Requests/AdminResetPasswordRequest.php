@@ -31,14 +31,16 @@ class AdminResetPasswordRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        // Extract user context from request attributes
-        $userContext = $this->attributes->get('userContext');
+        if (!$this->input('tenant_id')) {
+            // Extract user context from request attributes
+            $userContext = $this->attributes->get('userContext');
 
-        // Merge tenant_id from userContext into the request data if it's not provided
-        if ($userContext && !$this->input('tenant_id')) {
-            $this->merge([
-                'tenant_id' => $userContext->tenantId,
-            ]);
+            // Merge tenant_id from userContext into the request data if it's not provided
+            if ($userContext && !$this->input('tenant_id')) {
+                $this->merge([
+                    'tenant_id' => $userContext->tenantId,
+                ]);
+            }
         }
     }
 
