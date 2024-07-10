@@ -37,7 +37,7 @@ class UploadImageRequest extends FormRequest
         Log::debug('Validating image upload request data in UploadImageRequest');
 
         return [
-            'img' => 'required|file|mimes:jpeg,jpg,png,gif|max:5120', // 5MB max file size
+            'img' => 'required|file|mimes:jpeg,jpg,png,gif,pdf|max:10240', // 10MB max file size
         ];
     }
 

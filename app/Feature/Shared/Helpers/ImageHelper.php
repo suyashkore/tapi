@@ -28,6 +28,13 @@ class ImageHelper
         // Create the full path for the original file
         $filePath = storage_path('app/' . $storageDir . '/' . $fileName);
 
+        // If the file is a PDF, just change the filename and save
+        if ($newExtension === 'pdf') {
+            $newFilePath = storage_path('app/' . $storageDir . '/' . $newFileName);
+            Storage::move($filePath, $newFilePath);
+            return Storage::url($storageDir . '/' . $newFileName);
+        }
+
         // Create the OptimizerChain instance
         $optimizerChain = OptimizerChainFactory::create();
 
@@ -41,7 +48,7 @@ class ImageHelper
         $newFilePath = storage_path('app/' . $storageDir . '/' . $newFileName);
 
         // Save the optimized image with the new file name and extension
-        $image->encode($newExtension, 100)->save($newFilePath);
+        $image->encode($newExtension, 85)->save($newFilePath);
 
         // Delete the original uploaded file
         $relativePath = str_replace(storage_path('app/'), '', $filePath);
