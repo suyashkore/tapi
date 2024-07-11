@@ -25,6 +25,11 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/User/Routes/UserOtpRoutes.php');
         });
 
+        //Include Office routes
+        Route::group(['prefix' => 'offices'], function () {
+            require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
+        });
+
         // ... include other route groups as necessary
     });
 
