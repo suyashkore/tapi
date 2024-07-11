@@ -108,8 +108,8 @@ class CompanyController extends Controller
 
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
-        $sortBy = $request->get('sort_by', 'updated_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->get('sort_by', 'seq_num');
+        $sortOrder = $request->get('sort_order', 'asc');
         $perPage = $request->get('per_page', 10);
 
         try {
@@ -318,8 +318,8 @@ class CompanyController extends Controller
 
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
-        $sortBy = $request->get('sort_by', 'updated_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->get('sort_by', 'seq_num');
+        $sortOrder = $request->get('sort_order', 'asc');
 
         try {
             // Export Companies to an Excel file

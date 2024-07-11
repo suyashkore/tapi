@@ -98,7 +98,6 @@ class CompanyService
         return null;
     }
 
-    //TODO: Remove below method if not required.
     /**
      * Upload an image for the Company and update the image URL in the database: U
      *
@@ -111,7 +110,7 @@ class CompanyService
     public function uploadLogo(int $id, $file, $userContext): ?string
     {
         Log::info('Uploading image for Company in CompanyService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
-        
+
         $company = $this->companyRepository->find($id, $userContext);
 
         // Check the directory path and edit the folder name 'img' to something suitable
@@ -144,7 +143,6 @@ class CompanyService
         return $company->logo_url;
     }
 
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Company by setting its active field to false: U
      *
@@ -276,7 +274,7 @@ class CompanyService
 
             $companys = $data[0];
             $headers = array_shift($companys); // Remove the first row (headers)
-            //TODO Check if you would like to exclude 'id'
+
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($companys as $index => $companyData) {
