@@ -25,12 +25,18 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/User/Routes/UserOtpRoutes.php');
         });
 
+         // Include Company routes
+        Route::group(['prefix' => 'companies'], function () {
+            require base_path('app/Feature/Company/Routes/CompanyRoutes.php');  
+        });
+
         //Include Office routes
         Route::group(['prefix' => 'offices'], function () {
             require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
         });
 
         // ... include other route groups as necessary
+
     });
 
     // ... any additional API routes that are not part of the 'stapi/v1' prefix
