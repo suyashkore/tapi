@@ -35,6 +35,11 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
         });
 
+        //Include LoaderRate routes
+        Route::group(['prefix' => 'loaderrates'], function () {
+            require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
+        });
+
         // ... include other route groups as necessary
 
     });
