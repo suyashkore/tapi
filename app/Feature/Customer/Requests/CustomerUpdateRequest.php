@@ -34,10 +34,20 @@ class CustomerUpdateRequest extends FormRequest
         $userContext = $this->attributes->get('userContext');
 
         // Merge tenant_id from userContext into the request data
-        if ($userContext) {
+        // if ($userContext) {
+        //     $this->merge([
+        //         'tenant_id' => $userContext->tenantId,
+        //     ]);
+        // }
+
+        if ($userContext && isset($userContext->tenantId)) {
             $this->merge([
                 'tenant_id' => $userContext->tenantId,
             ]);
+        } else {
+            // Log an error or throw an exception if tenant_id cannot be determined
+            Log::error('Tenant ID missing or invalid in userContext', ['userContext' => $userContext]);
+            
         }
     }
 
