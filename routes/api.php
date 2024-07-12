@@ -33,6 +33,18 @@ Route::middleware('api')->group(function () {
         //Include Office routes
         Route::group(['prefix' => 'offices'], function () {
             require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
+            require base_path('app/Feature/Office/Routes/CpKycRoutes.php');
+        });
+
+        //Include Contract routes
+        Route::group(['prefix' => 'contracts'], function () {
+            require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
+            require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
+        });
+
+        //Include Customer routes
+        Route::group(['prefix' => 'customers'], function () {
+            require base_path('app/Feature/Customer/Routes/CustomerRoutes.php');
         });
 
         // ... include other route groups as necessary
