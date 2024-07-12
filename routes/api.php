@@ -27,22 +27,12 @@ Route::middleware('api')->group(function () {
 
          // Include Company routes
         Route::group(['prefix' => 'companies'], function () {
-            require base_path('app/Feature/Company/Routes/CompanyRoutes.php');  
+            require base_path('app/Feature/Company/Routes/CompanyRoutes.php');
         });
 
         //Include Office routes
         Route::group(['prefix' => 'offices'], function () {
             require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
-        });
-
-        //Include LoaderRate routes
-        Route::group(['prefix' => 'loaderrates'], function () {
-            require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
-        });
-
-        //Include LoaderRate routes
-         Route::group(['prefix' => 'driverrates'], function () {
-            require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
         });
 
         // ... include other route groups as necessary
