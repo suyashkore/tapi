@@ -57,6 +57,12 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/Fleet/Routes/VehicleRoutes.php');
         });
 
+     
+       // Include stationcoverages routes
+        Route::group(['prefix' => 'stationcoverages'], function () {
+            require base_path('app/Feature/Station/Routes/StationcoverageRoutes.php');
+        });
+
         // ... include other route groups as necessary
 
     });
