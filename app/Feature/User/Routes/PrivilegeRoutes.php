@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Route;
     Route::delete('/{id}', [PrivilegeController::class, 'destroy'])->middleware('checkPrivileges:SYS_ALL');
 
     // Route to download an XLSX template for importing Privileges
-    Route::get('/xlsxtemplate', [PrivilegeController::class, 'xlsxTemplate'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
+    Route::get('/xlsxtemplate', [PrivilegeController::class, 'xlsxTemplate'])->middleware('checkPrivileges:SYS_ALL');
 
     // Route to import Privileges from an XLSX file
     Route::post('/import/xlsx', [PrivilegeController::class, 'importXlsx'])->middleware('checkPrivileges:SYS_ALL');
