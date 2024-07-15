@@ -25,7 +25,7 @@ use App\Feature\Company\Models\Company;
  * @property string $v_type
  * @property string $mobile
  * @property string|null $email
- * @property string $contracting_office
+ * @property string $contracting_office_id
  * @property string|null $erp_code
  * @property bool $active
  * @property int|null $created_by
@@ -86,7 +86,7 @@ class Vendor extends Model
         'v_type',
         'mobile',
         'email',
-        'contracting_office',
+        'contracting_office_id',
         'erp_code',
         'active',
         'created_by',
@@ -135,7 +135,7 @@ class Vendor extends Model
      */
     public function contractingOffice(): BelongsTo
     {
-        return $this->belongsTo(Office::class, 'contracting_office');
+        return $this->belongsTo(Office::class, 'contracting_office_id');
     }
 
     /**

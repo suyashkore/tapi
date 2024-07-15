@@ -25,26 +25,12 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/User/Routes/UserOtpRoutes.php');
         });
 
-         // Include Company routes
-        Route::group(['prefix' => 'companies'], function () {
-            require base_path('app/Feature/Company/Routes/CompanyRoutes.php');
-        });
+        //Nana changes
 
-        //Include Office routes
-        Route::group(['prefix' => 'offices'], function () {
-            require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
-            require base_path('app/Feature/Office/Routes/CpKycRoutes.php');
-        });
+        Route::group(['prefix' => 'vendors'], function () {
 
-        //Include Contract routes
-        Route::group(['prefix' => 'contracts'], function () {
-            require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
-            require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
-        });
-
-        //Include Customer routes
-        Route::group(['prefix' => 'customers'], function () {
-            require base_path('app/Feature/Customer/Routes/CustomerRoutes.php');
+            require base_path('app/Feature/Vendor/Routes/VendorRoutes.php');
+            
         });
 
         // ... include other route groups as necessary
