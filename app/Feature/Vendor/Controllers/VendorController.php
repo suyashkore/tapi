@@ -4,7 +4,6 @@ namespace App\Feature\Vendor\Controllers;
 
 use App\Feature\Vendor\Requests\VendorStoreRequest;
 use App\Feature\Vendor\Requests\VendorUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Vendor\Services\VendorService;
 use App\Http\Controllers\Controller;

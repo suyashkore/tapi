@@ -2,7 +2,6 @@
 
 namespace App\Feature\Vendor\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Vendor\Models\Vendor;
 use App\Feature\Vendor\Repositories\VendorRepository;
 use App\Feature\Shared\Services\UserContext;
