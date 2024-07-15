@@ -4,7 +4,7 @@ namespace App\Feature\Office\Controllers;
 
 use App\Feature\Office\Requests\CpKycStoreRequest;
 use App\Feature\Office\Requests\CpKycUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Office\Services\CpKycService;
 use App\Http\Controllers\Controller;
@@ -106,7 +106,6 @@ class CpKycController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model CpKyc
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
@@ -167,7 +166,35 @@ class CpKycController extends Controller
         }
     }
 
-    //TODO: Remove below method if not required.
+    /**
+    * Upload an image or file for a CpKyc: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
+    {
+        Log::debug("Uploading a file for CpKyc with ID: $id in CpKycController");
+
+        // Validate request data
+        $validatedData = $request->validated();
+
+        // Extract user context from request
+        $userContext = $request->attributes->get('userContext');
+
+        try {
+            // Upload file and get the URL
+            $fileUrl = $this->cpKycService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('CpKyc uploadImgOrFile method response from CpKycController: ', $response->getData(true));
+            return $response;
+        } catch (\Exception $e) {
+            Log::error('Failed to upload file in CpKycController@uploadImgOrFile: ' . $e->getMessage());
+            return response()->json(['message' => 'Upload failed'], 500);
+        }
+    }
+
     /**
      * Deactivate a CpKyc (soft delete): U
      *
@@ -289,7 +316,6 @@ class CpKycController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model CpKyc
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');

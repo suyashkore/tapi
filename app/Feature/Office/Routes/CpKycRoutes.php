@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Route;
  * Each route is protected by the 'jwt.auth' and 'setUserContext' middleware to ensure the user is authenticated
  * and the user context is properly set.
  */
-//TODO: Check if below line should start with Route::prefix('modelname_lowercase_in_plural')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
-    Route::prefix('cpkycs')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
+Route::prefix('cpkycs')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
 
     // Route to create a new CpKyc: C
     Route::post('/', [CpKycController::class, 'store'])->middleware('checkPrivileges:TENANT_ALL');
@@ -25,8 +24,9 @@ use Illuminate\Support\Facades\Route;
     // Route to update an existing CpKyc: U
     Route::put('/{id}', [CpKycController::class, 'update'])->middleware('checkPrivileges:TENANT_ALL');
 
+    // Route to upload an image or file for a CpKyc: U
+    Route::post('/{id}/uploadimgorfile', [CpKycController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:TENANT_ALL');
 
-    //TODO: Check if this route is required for CpKyc
     // Route to deactivate a CpKyc (soft delete): U
     Route::patch('/{id}/deactivate', [CpKycController::class, 'deactivate'])->middleware('checkPrivileges:TENANT_ALL');
 

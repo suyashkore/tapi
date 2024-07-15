@@ -2,7 +2,7 @@
 
 namespace App\Feature\Office\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Office\Models\CpKyc;
 use App\Feature\Office\Repositories\CpKycRepository;
 use App\Feature\Shared\Services\UserContext;
@@ -96,6 +96,58 @@ class CpKycService
             return $this->cpKycRepository->update($cpKyc, $data, $userContext);
         }
         return null;
+    }
+
+    /**
+    * Upload an image or file for the CpKyc and update the URL in the database: U
+    *
+    * @param int $id
+    * @param \Illuminate\Http\UploadedFile $file
+    * @param string $urlFieldName
+    * @param UserContext $userContext
+    * @return string|null
+    * @throws Exception
+    */
+    public function uploadImgOrFileSrvc(int $id, $file, string $urlFieldName, UserContext $userContext): ?string
+    {
+        Log::info('Uploading file for CpKyc in CpKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        $cpKyc = $this->cpKycRepository->find($id, $userContext);
+
+        $storage_dir = 'public/files/cpkycs/cpkyc'.$id;
+        $filename_prefix = $urlFieldName;
+        if (str_ends_with($filename_prefix, '_url')) {
+            $filename_prefix = substr($filename_prefix, 0, -4);
+        } elseif (str_ends_with($filename_prefix, 'url')) {
+            $filename_prefix = substr($filename_prefix, 0, -3);
+        }
+
+        if (!$cpKyc) {
+            throw new Exception('CpKyc not found');
+        }
+
+        // Determine the file extension
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        // generate a unique file name but keep the same extension
+        $fileName = $filename_prefix . '_orig_' . $id . '.' . $extension;
+
+        // Store the file
+        $path = $file->storeAs($storage_dir, $fileName);
+
+        if (!$path) {
+            throw new Exception('Failed to upload file');
+        }
+
+        // New file name
+        $newFileName = $filename_prefix . '_' . $id . '.' . $extension;
+
+        // Save the file and get the URL
+        $fileUrl = ImgOrFileUploadHelper::saveImgOrFile($storage_dir, $fileName, $newFileName);
+
+        // Update the URL in the database
+        $cpKyc = $this->cpKycRepository->update($cpKyc, [$urlFieldName => $fileUrl], $userContext);
+
+        return $cpKyc->$urlFieldName;
     }
 
     /**
@@ -229,7 +281,6 @@ class CpKycService
 
             $cpKycs = $data[0];
             $headers = array_shift($cpKycs); // Remove the first row (headers)
-            //TODO Check if you would like to exclude 'id'
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($cpKycs as $index => $cpKycData) {
