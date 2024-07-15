@@ -98,53 +98,6 @@ class VendorService
         return null;
     }
 
-    //TODO: Remove below method if not required.
-    /**
-     * Upload an image for the Vendor and update the image URL in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadImage(int $id, $file, UserContext $userContext): ?string
-    {
-        Log::info('Uploading image for Vendor in VendorService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
-        $vendor = $this->vendorRepository->find($id, $userContext);
-        //TODO: Check the directory path and edit the folder name 'img' to something suitable
-        $storage_dir = 'public/images/vendor/img';
-        $filename_prefix = 'vendor';
-
-        if (!$vendor) {
-            throw new Exception('Vendor not found');
-        }
-
-        // generate a unique file name but keep the same extension
-        $fileName = $filename_prefix . '_orig_' . $id . '.' . $file->getClientOriginalExtension();
-
-        // Store the file
-        $path = $file->storeAs($storage_dir, $fileName);
-
-        if (!$path) {
-            throw new Exception('Failed to upload image');
-        }
-
-        // generate a unique file name but keep the same extension
-        $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
-
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName );
-
-        //TODO: Replace or update 'image_url' with relevant field of model Vendor
-        // Update the image URL in the database
-        $vendor = $this->vendorRepository->update($vendor, ['image_url' => $optimizedUrl], $userContext);
-
-        //TODO: Replace or update 'image_url' with relevant field of model Vendor
-        return $vendor->image_url;
-    }
-
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Vendor by setting its active field to false: U
      *
@@ -276,7 +229,6 @@ class VendorService
 
             $vendors = $data[0];
             $headers = array_shift($vendors); // Remove the first row (headers)
-            //TODO Check if you would like to exclude 'id'
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($vendors as $index => $vendorData) {

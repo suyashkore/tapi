@@ -119,7 +119,6 @@ class VendorRepository
             $query->where('updated_at', '<=', DateHelper::setEndTime($filters['updated_to']));
         }
 
-        //TODO: Review if the model has field by name 'active' and below code is required
         // Apply active filter
         if (!isset($filters['active'])) {
             $query->where('active', true); // Default active filter

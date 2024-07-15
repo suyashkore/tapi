@@ -24,9 +24,6 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing Vendor: U
     Route::put('/{id}', [VendorController::class, 'update'])->middleware('checkPrivileges:TENANT_ALL');
 
-    // Route to upload an image for a Vendor: U
-    Route::post('/{id}/uploadimage', [VendorController::class, 'uploadImage'])->middleware('checkPrivileges:TENANT_ALL');
-
     // Route to deactivate a Vendor (soft delete): U
     Route::patch('/{id}/deactivate', [VendorController::class, 'deactivate'])->middleware('checkPrivileges:TENANT_ALL');
 

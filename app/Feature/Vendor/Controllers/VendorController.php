@@ -106,7 +106,6 @@ class VendorController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model Vendor
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
@@ -167,38 +166,6 @@ class VendorController extends Controller
         }
     }
 
-    //TODO: Remove below method if not required.
-    /**
-     * Upload an image for a Vendor: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadImage(UploadImageRequest $request, $id)
-    {
-        Log::debug("Uploading an image for Vendor with ID: $id in VendorController");
-
-        // Validate request data
-        $validatedData = $request->validated();
-
-        // Extract user context from request
-        $userContext = $request->attributes->get('userContext');
-
-        try {
-            // Upload image and get the URL
-            $imageUrl = $this->vendorService->uploadImage($id, $validatedData['img'], $userContext);
-            //TODO: Replace 'image_url' with the real field name
-            $response = response()->json(['image_url' => $imageUrl], 200);
-            Log::info('Vendor uploadImage method response from VendorController: ', $response->getData(true));
-            return $response;
-        } catch (\Exception $e) {
-            Log::error('Failed to upload image in VendorController@uploadImage: ' . $e->getMessage());
-            return response()->json(['message' => 'Upload failed'], 500);
-        }
-    }
-
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Vendor (soft delete): U
      *
@@ -320,7 +287,6 @@ class VendorController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model Vendor
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
