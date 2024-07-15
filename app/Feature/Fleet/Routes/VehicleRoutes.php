@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
  * Each route is protected by the 'jwt.auth' and 'setUserContext' middleware to ensure the user is authenticated
  * and the user context is properly set.
  */
-Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
+Route::prefix('vehicles')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
 
     // Route to create a new Vehicle: C
     Route::post('/', [VehicleController::class, 'store'])->middleware('checkPrivileges:TENANT_ALL');

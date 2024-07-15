@@ -25,16 +25,35 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/User/Routes/UserOtpRoutes.php');
         });
 
-        //Nana changes
-
-        Route::group(['prefix' => 'vendors'], function () {
-
-            require base_path('app/Feature/Vendor/Routes/VendorRoutes.php');
-            
+        // Include Company routes
+        Route::group(['prefix' => 'companies'], function () {
+            require base_path('app/Feature/Company/Routes/CompanyRoutes.php');
         });
-         
-        //Include LoaderRate routes
-        Route::group(['prefix' => 'vehicles'], function () {
+
+        //Include Office routes
+        Route::group(['prefix' => 'offices'], function () {
+            require base_path('app/Feature/Office/Routes/OfficeRoutes.php');
+            require base_path('app/Feature/Office/Routes/CpKycRoutes.php');
+        });
+
+        //Include Contract routes
+        Route::group(['prefix' => 'contracts'], function () {
+            require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
+            require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
+        });
+
+        //Include Customer routes
+        Route::group(['prefix' => 'customers'], function () {
+            require base_path('app/Feature/Customer/Routes/CustomerRoutes.php');
+        });
+
+        //Include Vendor routes
+        Route::group(['prefix' => 'vendors'], function () {
+            require base_path('app/Feature/Vendor/Routes/VendorRoutes.php');
+        });
+
+        //Include Fleet routes
+        Route::group(['prefix' => 'fleet'], function () {
             require base_path('app/Feature/Fleet/Routes/VehicleRoutes.php');
         });
 

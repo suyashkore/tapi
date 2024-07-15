@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Route;
  * Each route is protected by the 'jwt.auth' and 'setUserContext' middleware to ensure the user is authenticated
  * and the user context is properly set.
  */
-//TODO: Check if below line should start with Route::prefix('modelname_lowercase_in_plural')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
 Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
 
     // Route to create a new Vendor: C
@@ -25,11 +24,9 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing Vendor: U
     Route::put('/{id}', [VendorController::class, 'update'])->middleware('checkPrivileges:TENANT_ALL');
 
-    //TODO: Check if this route is required for Vendor
     // Route to upload an image for a Vendor: U
     Route::post('/{id}/uploadimage', [VendorController::class, 'uploadImage'])->middleware('checkPrivileges:TENANT_ALL');
 
-    //TODO: Check if this route is required for Vendor
     // Route to deactivate a Vendor (soft delete): U
     Route::patch('/{id}/deactivate', [VendorController::class, 'deactivate'])->middleware('checkPrivileges:TENANT_ALL');
 
