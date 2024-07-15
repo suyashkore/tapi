@@ -17,7 +17,7 @@ use App\Feature\Contract\Models\LoaderRate;
  *
  * Controller class to handle HTTP requests related to LoaderRate entity.
  *
- * @package App\Feature\LoaderRate\Controllers
+ * @package App\Feature\Contract\Controllers
  */
 class LoaderRateController extends Controller
 {
@@ -107,7 +107,7 @@ class LoaderRateController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-       
+
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');

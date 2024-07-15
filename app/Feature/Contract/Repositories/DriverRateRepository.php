@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Repository class to handle database interactions for the DriverRate model.
  *
- * @package App\Feature\DriverRate\Repositories
+ * @package App\Feature\Contract\Repositories
  */
 class DriverRateRepository
 {

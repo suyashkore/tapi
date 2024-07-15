@@ -17,7 +17,7 @@ use Exception;
  *
  * Service class to handle business logic for the LoaderRate entity.
  *
- * @package App\Feature\LoaderRate\Services
+ * @package App\Feature\Contract\Services
  */
 class LoaderRateService
 {

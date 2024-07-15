@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Repository class to handle database interactions for the LoaderRate model.
  *
- * @package App\Feature\LoaderRate\Repositories
+ * @package App\Feature\Contract\Repositories
  */
 class LoaderRateRepository
 {
