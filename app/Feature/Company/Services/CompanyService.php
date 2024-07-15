@@ -2,7 +2,7 @@
 
 namespace App\Feature\Company\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Company\Models\Company;
 use App\Feature\Company\Repositories\CompanyRepository;
 use App\Feature\Shared\Services\UserContext;
@@ -99,48 +99,55 @@ class CompanyService
     }
 
     /**
-     * Upload an image for the Company and update the image URL in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadLogo(int $id, $file, $userContext): ?string
+    * Upload an image or file for the Company and update the URL in the database: U
+    *
+    * @param int $id
+    * @param \Illuminate\Http\UploadedFile $file
+    * @param string $urlFieldName
+    * @param UserContext $userContext
+    * @return string|null
+    * @throws Exception
+    */
+    public function uploadImgOrFileSrvc(int $id, $file, string $urlFieldName, UserContext $userContext): ?string
     {
-        Log::info('Uploading image for Company in CompanyService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
-
+        Log::info('Uploading file for Company in CompanyService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $company = $this->companyRepository->find($id, $userContext);
 
-        // Check the directory path and edit the folder name 'img' to something suitable
-        $storage_dir = 'public/images/company/img';
-        $filename_prefix = 'company';
+        $storage_dir = 'public/files/companies/company'.$id;
+        $filename_prefix = $urlFieldName;
+        if (str_ends_with($filename_prefix, '_url')) {
+            $filename_prefix = substr($filename_prefix, 0, -4);
+        } elseif (str_ends_with($filename_prefix, 'url')) {
+            $filename_prefix = substr($filename_prefix, 0, -3);
+        }
 
         if (!$company) {
             throw new Exception('Company not found');
         }
 
-        // Generate a unique file name but keep the same extension
-        $fileName = $filename_prefix . '_orig_' . $id . '.' . $file->getClientOriginalExtension();
+        // Determine the file extension
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        // generate a unique file name but keep the same extension
+        $fileName = $filename_prefix . '_orig_' . $id . '.' . $extension;
 
         // Store the file
         $path = $file->storeAs($storage_dir, $fileName);
 
         if (!$path) {
-            throw new Exception('Failed to upload image');
+            throw new Exception('Failed to upload file');
         }
 
-        // Generate a unique file name but keep the same extension
-        $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
+        // New file name
+        $newFileName = $filename_prefix . '_' . $id . '.' . $extension;
 
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName);
+        // Save the file and get the URL
+        $fileUrl = ImgOrFileUploadHelper::saveImgOrFile($storage_dir, $fileName, $newFileName);
 
-        // Update the image URL in the database
-        $company = $this->companyRepository->update($company, ['logo_url' => $optimizedUrl], $userContext);
+        // Update the URL in the database
+        $company = $this->companyRepository->update($company, [$urlFieldName => $fileUrl], $userContext);
 
-        return $company->logo_url;
+        return $company->$urlFieldName;
     }
 
     /**
@@ -274,7 +281,6 @@ class CompanyService
 
             $companys = $data[0];
             $headers = array_shift($companys); // Remove the first row (headers)
-
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($companys as $index => $companyData) {

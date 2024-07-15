@@ -24,8 +24,8 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing Company: U
     Route::put('/{id}', [CompanyController::class, 'update'])->middleware('checkPrivileges:TENANT_ALL');
 
-    // Route to upload an image for a Company: U
-    Route::post('/{id}/uploadlogo', [CompanyController::class, 'uploadLogo'])->middleware('checkPrivileges:TENANT_ALL');
+    // Route to upload an image or file for a Company: U
+    Route::post('/{id}/uploadimgorfile', [CompanyController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:TENANT_ALL');
 
     // Route to deactivate a Company (soft delete): U
     Route::patch('/{id}/deactivate', [CompanyController::class, 'deactivate'])->middleware('checkPrivileges:TENANT_ALL');

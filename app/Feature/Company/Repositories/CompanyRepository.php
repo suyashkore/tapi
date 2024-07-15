@@ -118,6 +118,7 @@ class CompanyRepository
         if (isset($filters['updated_to']) && !empty($filters['updated_to'])) {
             $query->where('updated_at', '<=', DateHelper::setEndTime($filters['updated_to']));
         }
+
         // Apply active filter
         if (!isset($filters['active'])) {
             $query->where('active', true); // Default active filter

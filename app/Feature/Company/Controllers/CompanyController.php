@@ -4,7 +4,7 @@ namespace App\Feature\Company\Controllers;
 
 use App\Feature\Company\Requests\CompanyStoreRequest;
 use App\Feature\Company\Requests\CompanyUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Company\Services\CompanyService;
 use App\Http\Controllers\Controller;
@@ -108,8 +108,8 @@ class CompanyController extends Controller
 
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
-        $sortBy = $request->get('sort_by', 'seq_num');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort_by', 'updated_at');
+        $sortOrder = $request->get('sort_order', 'desc');
         $perPage = $request->get('per_page', 10);
 
         try {
@@ -167,15 +167,15 @@ class CompanyController extends Controller
     }
 
     /**
-     * Upload an image for a Company: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadLogo(UploadImageRequest $request, $id)
+    * Upload an image or file for a Company: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
     {
-        Log::debug("Uploading an image for Company with ID: $id in CompanyController");
+        Log::debug("Uploading a file for Company with ID: $id in CompanyController");
 
         // Validate request data
         $validatedData = $request->validated();
@@ -184,17 +184,17 @@ class CompanyController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         try {
-            // Upload image and get the URL
-            $imageUrl = $this->companyService->uploadLogo($id, $validatedData['img'], $userContext);
-
-            $response = response()->json(['logo_url' => $imageUrl], 200);
-            Log::info('Company uploadLogo method response from CompanyController: ', $response->getData(true));
+            // Upload file and get the URL
+            $fileUrl = $this->companyService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('Company uploadImgOrFile method response from CompanyController: ', $response->getData(true));
             return $response;
         } catch (\Exception $e) {
-            Log::error('Failed to upload image in CompanyController@uploadLogo: ' . $e->getMessage());
+            Log::error('Failed to upload file in CompanyController@uploadImgOrFile: ' . $e->getMessage());
             return response()->json(['message' => 'Upload failed'], 500);
         }
     }
+
     /**
      * Deactivate a Company (soft delete): U
      *
@@ -318,8 +318,8 @@ class CompanyController extends Controller
 
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
-        $sortBy = $request->get('sort_by', 'seq_num');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort_by', 'updated_at');
+        $sortOrder = $request->get('sort_order', 'desc');
 
         try {
             // Export Companies to an Excel file
