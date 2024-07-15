@@ -32,6 +32,11 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/Vendor/Routes/VendorRoutes.php');
             
         });
+         
+        //Include LoaderRate routes
+        Route::group(['prefix' => 'vehicles'], function () {
+            require base_path('app/Feature/Fleet/Routes/VehicleRoutes.php');
+        });
 
         // ... include other route groups as necessary
 
