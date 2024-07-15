@@ -4,7 +4,7 @@ namespace App\Feature\Tenant\Controllers;
 
 use App\Feature\Tenant\Requests\TenantKycStoreRequest;
 use App\Feature\Tenant\Requests\TenantKycUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Tenant\Services\TenantKycService;
 use App\Http\Controllers\Controller;
@@ -107,7 +107,7 @@ class TenantKycController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         // Extract filters, sorting, and pagination parameters from request
-        $filters = $request->only(['created_from', 'created_to', 'updated_from', 'updated_to']);
+        $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $perPage = $request->get('per_page', 10);
@@ -167,15 +167,15 @@ class TenantKycController extends Controller
     }
 
     /**
-     * Upload photo or image of the Tenant Owner: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadOwnerPhoto(UploadImageRequest $request, $id)
+    * Upload an image or file for a TenantKyc: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
     {
-        Log::debug("Uploading photo of owner for TenantKyc with ID: $id in TenantKycController");
+        Log::debug("Uploading a file for TenantKyc with ID: $id in TenantKycController");
 
         // Validate request data
         $validatedData = $request->validated();
@@ -184,14 +184,42 @@ class TenantKycController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         try {
-            // Upload logo image and get the URL
-            $ownerPhotoUrl = $this->tenantKycService->uploadOwnerPhoto($id, $validatedData['img'], $userContext);
-            $response = response()->json(['owner_photo_url' => $ownerPhotoUrl], 200);
-            Log::info('TenantKyc uploadOwnerPhoto method response from TenantKycController: ', $response->getData(true));
+            // Upload file and get the URL
+            $fileUrl = $this->tenantKycService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('TenantKyc uploadImgOrFile method response from TenantKycController: ', $response->getData(true));
             return $response;
         } catch (\Exception $e) {
-            Log::error('Failed to upload owner photo in TenantKycController@uploadOwnerPhoto: ' . $e->getMessage());
+            Log::error('Failed to upload file in TenantKycController@uploadImgOrFile: ' . $e->getMessage());
             return response()->json(['message' => 'Upload failed'], 500);
+        }
+    }
+
+    /**
+     * Deactivate a TenantKyc (soft delete): U
+     *
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deactivate($id, Request $request)
+    {
+        Log::debug("Deactivating TenantKyc with ID: $id in TenantKycController");
+
+        // Extract user context from request
+        $userContext = $request->attributes->get('userContext');
+
+        // Deactivate TenantKyc by ID
+        $tenantKyc = $this->tenantKycService->deactivateTenantKyc($id, $userContext);
+
+        if ($tenantKyc) {
+            $response = response()->json(['id' => $id, 'active' => false, 'message' => 'TenantKyc deactivated successfully'], 200);
+            Log::info('TenantKyc deactivate method response from TenantKycController: ', $response->getData(true));
+            return $response;
+        } else {
+            $error_response = response()->json(['message' => 'TenantKyc not found or already deactivated'], 404);
+            Log::error('Failed to deactivate TenantKyc in TenantKycController@deactivate: ', $error_response->getData(true));
+            return $error_response;
         }
     }
 

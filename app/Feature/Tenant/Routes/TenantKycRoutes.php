@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Route;
  * Each route is protected by the 'jwt.auth' and 'setUserContext' middleware to ensure the user is authenticated
  * and the user context is properly set.
  */
-
- Route::prefix('kyc')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
+Route::prefix('kyc')->middleware(['jwt.auth', 'setUserContext'])->group(function () {
 
     // Route to create a new TenantKyc: C
     Route::post('/', [TenantKycController::class, 'store'])->middleware('checkPrivileges:SYS_ALL');
@@ -25,8 +24,11 @@ use Illuminate\Support\Facades\Route;
     // Route to update an existing TenantKyc: U
     Route::put('/{id}', [TenantKycController::class, 'update'])->middleware('checkPrivileges:SYS_ALL');
 
-    // Route to upload a logo for a TenantKyc: U
-    Route::post('/{id}/uploadownerphoto', [TenantKycController::class, 'uploadOwnerPhoto'])->middleware('checkPrivileges:SYS_ALL');
+    // Route to upload an image or file for a TenantKyc: U
+    Route::post('/{id}/uploadimgorfile', [TenantKycController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:SYS_ALL');
+
+    // Route to deactivate a TenantKyc (soft delete): U
+    Route::patch('/{id}/deactivate', [TenantKycController::class, 'deactivate'])->middleware('checkPrivileges:SYS_ALL');
 
     // Route to delete a TenantKyc permanently: D
     Route::delete('/{id}', [TenantKycController::class, 'destroy'])->middleware('checkPrivileges:SYS_ALL');

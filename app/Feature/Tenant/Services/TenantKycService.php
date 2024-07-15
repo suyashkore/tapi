@@ -2,7 +2,7 @@
 
 namespace App\Feature\Tenant\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Tenant\Models\TenantKyc;
 use App\Feature\Tenant\Repositories\TenantKycRepository;
 use App\Feature\Shared\Services\UserContext;
@@ -99,45 +99,72 @@ class TenantKycService
     }
 
     /**
-     * Upload photo of tenant owner for the TenantKyc and update the owner_photo_url in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadOwnerPhoto(int $id, $file, UserContext $userContext): ?string
+    * Upload an image or file for the TenantKyc and update the URL in the database: U
+    *
+    * @param int $id
+    * @param \Illuminate\Http\UploadedFile $file
+    * @param string $urlFieldName
+    * @param UserContext $userContext
+    * @return string|null
+    * @throws Exception
+    */
+    public function uploadImgOrFileSrvc(int $id, $file, string $urlFieldName, UserContext $userContext): ?string
     {
-        Log::info('Uploading photo of tenant owner for TenantKyc in TenantKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        Log::info('Uploading file for TenantKyc in TenantKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $tenantKyc = $this->tenantKycRepository->find($id, $userContext);
-        $storage_dir = 'public/images/tenantkyc/ownerphoto';
-        $filename_prefix = 'tenantkyc';
+
+        $storage_dir = 'public/files/tenantkycs/tenantkyc'.$id;
+        $filename_prefix = $urlFieldName;
+        if (str_ends_with($filename_prefix, '_url')) {
+            $filename_prefix = substr($filename_prefix, 0, -4);
+        } elseif (str_ends_with($filename_prefix, 'url')) {
+            $filename_prefix = substr($filename_prefix, 0, -3);
+        }
 
         if (!$tenantKyc) {
             throw new Exception('TenantKyc not found');
         }
 
+        // Determine the file extension
+        $extension = strtolower($file->getClientOriginalExtension());
+
         // generate a unique file name but keep the same extension
-        $fileName = $filename_prefix . '_orig_' . $id . '.' . $file->getClientOriginalExtension();
+        $fileName = $filename_prefix . '_orig_' . $id . '.' . $extension;
 
         // Store the file
         $path = $file->storeAs($storage_dir, $fileName);
 
         if (!$path) {
-            throw new Exception('Failed to upload tenant owner photo');
+            throw new Exception('Failed to upload file');
         }
 
-        // generate a unique file name but keep the same extension
-        $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
+        // New file name
+        $newFileName = $filename_prefix . '_' . $id . '.' . $extension;
 
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName );
+        // Save the file and get the URL
+        $fileUrl = ImgOrFileUploadHelper::saveImgOrFile($storage_dir, $fileName, $newFileName);
 
-        // Update the logo URL in the database
-        $tenantKyc = $this->tenantKycRepository->update($tenantKyc, ['owner_photo_url' => $optimizedUrl], $userContext);
+        // Update the URL in the database
+        $tenantKyc = $this->tenantKycRepository->update($tenantKyc, [$urlFieldName => $fileUrl], $userContext);
 
-        return $tenantKyc->owner_photo_url;
+        return $tenantKyc->$urlFieldName;
+    }
+
+    /**
+     * Deactivate a TenantKyc by setting its active field to false: U
+     *
+     * @param int $id
+     * @param UserContext $userContext
+     * @return TenantKyc|null
+     */
+    public function deactivateTenantKyc(int $id, UserContext $userContext): ?TenantKyc
+    {
+        Log::info('Deactivating TenantKyc in TenantKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        $tenantKyc = $this->tenantKycRepository->find($id, $userContext);
+        if ($tenantKyc) {
+            return $this->tenantKycRepository->update($tenantKyc, ['active' => false], $userContext);
+        }
+        return null;
     }
 
     /**

@@ -119,6 +119,26 @@ class TenantKycRepository
             $query->where('updated_at', '<=', DateHelper::setEndTime($filters['updated_to']));
         }
 
+        // Apply active filter
+        if (!isset($filters['active'])) {
+            $query->where('active', true); // Default active filter
+        } else {
+            switch ($filters['active']) {
+                case 'true':
+                    $query->where('active', true);
+                    break;
+                case 'false':
+                    $query->where('active', false);
+                    break;
+                case 'both':
+                    // No need to add a where clause for 'both'
+                    break;
+                default:
+                    $query->where('active', true); // Default to true for invalid values
+                    break;
+            }
+        }
+
         // Apply other filters
         foreach ($filters as $key => $value) {
             if (!empty($value) && !in_array($key, ['created_from', 'created_to', 'updated_from', 'updated_to', 'active'])) {
