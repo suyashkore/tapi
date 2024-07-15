@@ -24,9 +24,8 @@ Route::prefix('vehicles')->middleware(['jwt.auth', 'setUserContext'])->group(fun
     // Route to update an existing Vehicle: U
     Route::put('/{id}', [VehicleController::class, 'update'])->middleware('checkPrivileges:TENANT_ALL');
 
-    //TODO: Check if this route is required for Vehicle
-    // Route to upload an image for a Vehicle: U
-    Route::post('/{id}/uploadimage', [VehicleController::class, 'uploadImage'])->middleware('checkPrivileges:TENANT_ALL');
+    // Route to upload an image or file for a Vehicle: U
+    Route::post('/{id}/uploadimgorfile', [VehicleController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:TENANT_ALL');
 
     // Route to deactivate a Vehicle (soft delete): U
     Route::patch('/{id}/deactivate', [VehicleController::class, 'deactivate'])->middleware('checkPrivileges:TENANT_ALL');

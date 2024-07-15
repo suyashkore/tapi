@@ -2,7 +2,7 @@
 
 namespace App\Feature\Fleet\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Fleet\Models\Vehicle;
 use App\Feature\Fleet\Repositories\VehicleRepository;
 use App\Feature\Shared\Services\UserContext;
@@ -17,7 +17,7 @@ use Exception;
  *
  * Service class to handle business logic for the Vehicle entity.
  *
- * @package App\Feature\Vehicle\Services
+ * @package App\Feature\Fleet\Services
  */
 class VehicleService
 {
@@ -98,23 +98,28 @@ class VehicleService
         return null;
     }
 
-    //TODO: Remove below method if not required.
     /**
-     * Upload an image for the Vehicle and update the image URL in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadImage(int $id, $file, UserContext $userContext): ?string
+    * Upload an image or file for the Vehicle and update the URL in the database: U
+    *
+    * @param int $id
+    * @param \Illuminate\Http\UploadedFile $file
+    * @param string $urlFieldName
+    * @param UserContext $userContext
+    * @return string|null
+    * @throws Exception
+    */
+    public function uploadImgOrFileSrvc(int $id, $file, string $urlFieldName, UserContext $userContext): ?string
     {
-        Log::info('Uploading image for Vehicle in VehicleService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        Log::info('Uploading file for Vehicle in VehicleService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $vehicle = $this->vehicleRepository->find($id, $userContext);
-        //TODO: Check the directory path and edit the folder name 'img' to something suitable
-        $storage_dir = 'public/images/vehicle/img';
-        $filename_prefix = 'vehicle';
+
+        $storage_dir = 'public/files/vehicles/vehicle'.$id;
+        $filename_prefix = $urlFieldName;
+        if (str_ends_with($filename_prefix, '_url')) {
+            $filename_prefix = substr($filename_prefix, 0, -4);
+        } elseif (str_ends_with($filename_prefix, 'url')) {
+            $filename_prefix = substr($filename_prefix, 0, -3);
+        }
 
         if (!$vehicle) {
             throw new Exception('Vehicle not found');
@@ -130,28 +135,21 @@ class VehicleService
         $path = $file->storeAs($storage_dir, $fileName);
 
         if (!$path) {
-            throw new Exception('Failed to upload image');
+            throw new Exception('Failed to upload file');
         }
 
-        // Determine the new file name based on the extension
-        if ($extension === 'pdf') {
-            $newFileName = $filename_prefix . '_' . $id . '.' . 'pdf';
-        } else {
-            $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
-        }
+        // New file name
+        $newFileName = $filename_prefix . '_' . $id . '.' . $extension;
 
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName );
+        // Save the file and get the URL
+        $fileUrl = ImgOrFileUploadHelper::saveImgOrFile($storage_dir, $fileName, $newFileName);
 
-        //TODO: Replace or update 'image_url' with relevant field of model Vehicle
-        // Update the image URL in the database
-        $vehicle = $this->vehicleRepository->update($vehicle, ['image_url' => $optimizedUrl], $userContext);
+        // Update the URL in the database
+        $vehicle = $this->vehicleRepository->update($vehicle, [$urlFieldName => $fileUrl], $userContext);
 
-        //TODO: Replace or update 'image_url' with relevant field of model Vehicle
-        return $vehicle->image_url;
+        return $vehicle->$urlFieldName;
     }
 
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Vehicle by setting its active field to false: U
      *
@@ -283,7 +281,6 @@ class VehicleService
 
             $vehicles = $data[0];
             $headers = array_shift($vehicles); // Remove the first row (headers)
-            //TODO Check if you would like to exclude 'id'
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($vehicles as $index => $vehicleData) {

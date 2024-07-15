@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Repository class to handle database interactions for the Vehicle model.
  *
- * @package App\Feature\Vehicle\Repositories
+ * @package App\Feature\Fleet\Repositories
  */
 class VehicleRepository
 {

@@ -4,7 +4,7 @@ namespace App\Feature\Fleet\Controllers;
 
 use App\Feature\Fleet\Requests\VehicleStoreRequest;
 use App\Feature\Fleet\Requests\VehicleUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Fleet\Services\VehicleService;
 use App\Http\Controllers\Controller;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
  *
  * Controller class to handle HTTP requests related to Vehicle entity.
  *
- * @package App\Feature\Vehicle\Controllers
+ * @package App\Feature\Fleet\Controllers
  */
 class VehicleController extends Controller
 {
@@ -166,17 +166,16 @@ class VehicleController extends Controller
         }
     }
 
-    //TODO: Remove below method if not required.
     /**
-     * Upload an image for a Vehicle: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadImage(UploadImageRequest $request, $id)
+    * Upload an image or file for a Vehicle: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
     {
-        Log::debug("Uploading an image for Vehicle with ID: $id in VehicleController");
+        Log::debug("Uploading a file for Vehicle with ID: $id in VehicleController");
 
         // Validate request data
         $validatedData = $request->validated();
@@ -185,19 +184,17 @@ class VehicleController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         try {
-            // Upload image and get the URL
-            $imageUrl = $this->vehicleService->uploadImage($id, $validatedData['img'], $userContext);
-            //TODO: Replace 'image_url' with the real field name
-            $response = response()->json(['image_url' => $imageUrl], 200);
-            Log::info('Vehicle uploadImage method response from VehicleController: ', $response->getData(true));
+            // Upload file and get the URL
+            $fileUrl = $this->vehicleService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('Vehicle uploadImgOrFile method response from VehicleController: ', $response->getData(true));
             return $response;
         } catch (\Exception $e) {
-            Log::error('Failed to upload image in VehicleController@uploadImage: ' . $e->getMessage());
+            Log::error('Failed to upload file in VehicleController@uploadImgOrFile: ' . $e->getMessage());
             return response()->json(['message' => 'Upload failed'], 500);
         }
     }
 
-    
     /**
      * Deactivate a Vehicle (soft delete): U
      *
@@ -319,7 +316,6 @@ class VehicleController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-      
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
