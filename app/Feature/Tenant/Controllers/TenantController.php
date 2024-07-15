@@ -4,7 +4,7 @@ namespace App\Feature\Tenant\Controllers;
 
 use App\Feature\Tenant\Requests\TenantStoreRequest;
 use App\Feature\Tenant\Requests\TenantUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\Tenant\Services\TenantService;
 use App\Http\Controllers\Controller;
@@ -167,15 +167,15 @@ class TenantController extends Controller
     }
 
     /**
-     * Upload a logo image for a tenant: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadLogo(UploadImageRequest $request, $id)
+    * Upload an image or file for a Tenant: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
     {
-        Log::debug("Uploading logo for Tenant with ID: $id in TenantController");
+        Log::debug("Uploading a file for Tenant with ID: $id in TenantController");
 
         // Validate request data
         $validatedData = $request->validated();
@@ -184,13 +184,13 @@ class TenantController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         try {
-            // Upload logo image and get the URL
-            $logoUrl = $this->tenantService->uploadLogo($id, $validatedData['img'], $userContext);
-            $response = response()->json(['logo_url' => $logoUrl], 200);
-            Log::info('Tenant uploadLogo method response from TenantController: ', $response->getData(true));
+            // Upload file and get the URL
+            $fileUrl = $this->tenantService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('Tenant uploadImgOrFile method response from TenantController: ', $response->getData(true));
             return $response;
         } catch (\Exception $e) {
-            Log::error('Failed to upload logo in TenantController@uploadLogo: ' . $e->getMessage());
+            Log::error('Failed to upload file in TenantController@uploadImgOrFile: ' . $e->getMessage());
             return response()->json(['message' => 'Upload failed'], 500);
         }
     }

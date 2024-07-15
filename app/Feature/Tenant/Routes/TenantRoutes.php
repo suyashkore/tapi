@@ -25,8 +25,8 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing tenant: U
     Route::put('/{id}', [TenantController::class, 'update'])->middleware('checkPrivileges:SYS_ALL');
 
-    // Route to upload a logo for a tenant: U
-    Route::post('/{id}/uploadlogo', [TenantController::class, 'uploadLogo'])->middleware('checkPrivileges:SYS_ALL');
+    // Route to upload an image or file for a Tenant: U
+    Route::post('/{id}/uploadimgorfile', [TenantController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:SYS_ALL');
 
     // Route to deactivate a tenant (soft delete): U
     Route::patch('/{id}/deactivate', [TenantController::class, 'deactivate'])->middleware('checkPrivileges:SYS_ALL');
