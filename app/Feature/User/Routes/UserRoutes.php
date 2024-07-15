@@ -25,8 +25,8 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing User: U
     Route::put('/{id}', [UserController::class, 'update'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
-    // Route to upload an image for a User: U
-    Route::post('/{id}/uploadprofilepic', [UserController::class, 'uploadProfilePic'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
+    // Route to upload an image or file for a User: U
+    Route::post('/{id}/uploadimgorfile', [UserController::class, 'uploadImgOrFile'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
     // Route to deactivate a User (soft delete): U
     Route::patch('/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');

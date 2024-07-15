@@ -5,7 +5,7 @@ namespace App\Feature\User\Controllers;
 use App\Feature\User\Requests\AdminResetPasswordRequest;
 use App\Feature\User\Requests\UserStoreRequest;
 use App\Feature\User\Requests\UserUpdateRequest;
-use App\Feature\Shared\Requests\UploadImageRequest;
+use App\Feature\Shared\Requests\UploadImgOrFileRequest;
 use App\Feature\Shared\Requests\ImportXlsxRequest;
 use App\Feature\User\Services\UserService;
 use App\Http\Controllers\Controller;
@@ -201,15 +201,15 @@ class UserController extends Controller
     }
 
     /**
-     * Upload an image for a User: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function uploadProfilePic(UploadImageRequest $request, $id)
+    * Upload an image or file for a User: U
+    *
+    * @param UploadImgOrFileRequest $request
+    * @param int $id
+    * @return \Illuminate\Http\JsonResponse
+    */
+    public function uploadImgOrFile(UploadImgOrFileRequest $request, $id)
     {
-        Log::debug("Uploading an image for User with ID: $id in UserController");
+        Log::debug("Uploading a file for User with ID: $id in UserController");
 
         // Validate request data
         $validatedData = $request->validated();
@@ -218,13 +218,13 @@ class UserController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         try {
-            // Upload image and get the URL
-            $imageUrl = $this->userService->uploadProfilePic($id, $validatedData['img'], $userContext);
-            $response = response()->json(['profile_pic_url' => $imageUrl], 200);
-            Log::info('User uploadProfilePic method response from UserController: ', $response->getData(true));
+            // Upload file and get the URL
+            $fileUrl = $this->userService->uploadImgOrFileSrvc($id, $validatedData['file'], $validatedData['urlfield_name'], $userContext);
+            $response = response()->json([$validatedData['urlfield_name'] => $fileUrl], 200);
+            Log::info('User uploadImgOrFile method response from UserController: ', $response->getData(true));
             return $response;
         } catch (\Exception $e) {
-            Log::error('Failed to upload profile pic in UserController@uploadProfilePic: ' . $e->getMessage());
+            Log::error('Failed to upload file in UserController@uploadImgOrFile: ' . $e->getMessage());
             return response()->json(['message' => 'Upload failed'], 500);
         }
     }

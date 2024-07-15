@@ -2,7 +2,7 @@
 
 namespace App\Feature\User\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\User\Models\User;
 use App\Feature\User\Repositories\UserRepository;
 use App\Feature\Shared\Services\UserContext;
@@ -100,21 +100,27 @@ class UserService
     }
 
     /**
-     * Upload an image for the User and update the image URL in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadProfilePic(int $id, $file, UserContext $userContext): ?string
+    * Upload an image or file for the User and update the URL in the database: U
+    *
+    * @param int $id
+    * @param \Illuminate\Http\UploadedFile $file
+    * @param string $urlFieldName
+    * @param UserContext $userContext
+    * @return string|null
+    * @throws Exception
+    */
+    public function uploadImgOrFileSrvc(int $id, $file, string $urlFieldName, UserContext $userContext): ?string
     {
-        Log::info('Uploading image for User in UserService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        Log::info('Uploading file for User in UserService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $user = $this->userRepository->find($id, $userContext);
 
-        $storage_dir = 'public/images/users/profilepic';
-        $filename_prefix = 'user';
+        $storage_dir = 'public/files/users/user'.$id;
+        $filename_prefix = $urlFieldName;
+        if (str_ends_with($filename_prefix, '_url')) {
+            $filename_prefix = substr($filename_prefix, 0, -4);
+        } elseif (str_ends_with($filename_prefix, 'url')) {
+            $filename_prefix = substr($filename_prefix, 0, -3);
+        }
 
         if (!$user) {
             throw new Exception('User not found');
@@ -130,23 +136,19 @@ class UserService
         $path = $file->storeAs($storage_dir, $fileName);
 
         if (!$path) {
-            throw new Exception('Failed to upload image');
+            throw new Exception('Failed to upload file');
         }
 
-        // Determine the new file name based on the extension
-        if ($extension === 'pdf') {
-            $newFileName = $filename_prefix . '_' . $id . '.' . 'pdf';
-        } else {
-            $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
-        }
+        // New file name
+        $newFileName = $filename_prefix . '_' . $id . '.' . $extension;
 
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName );
+        // Save the file and get the URL
+        $fileUrl = ImgOrFileUploadHelper::saveImgOrFile($storage_dir, $fileName, $newFileName);
 
-        // Update the image URL in the database
-        $user = $this->userRepository->update($user, ['profile_pic_url' => $optimizedUrl], $userContext);
+        // Update the URL in the database
+        $user = $this->userRepository->update($user, [$urlFieldName => $fileUrl], $userContext);
 
-        return $user->profile_pic_url;
+        return $user->$urlFieldName;
     }
 
     /**
