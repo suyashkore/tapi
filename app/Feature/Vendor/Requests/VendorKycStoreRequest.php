@@ -43,7 +43,7 @@ class VendorKycStoreRequest extends FormRequest
     {
         return [
             'tenant_id' => 'nullable|exists:tenants,id',
-            'vendor' => 'required|exists:vendors,id',
+            'vendor_id' => 'required|exists:vendors,id',
             'v_type' => 'required|string|in:FUEL_VENDOR,FLEET_VENDOR,LOADER,DRIVER,OTHERS|max:24',
             'legal_name' => 'required|string|max:128',
             'owner1_name' => 'required|string|max:48',

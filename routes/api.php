@@ -50,6 +50,8 @@ Route::middleware('api')->group(function () {
         //Include Vendor routes
         Route::group(['prefix' => 'vendors'], function () {
             require base_path('app/Feature/Vendor/Routes/VendorRoutes.php');
+            require base_path('app/Feature/Vendor/Routes/VendorKycRoutes.php');
+
         });
 
         //Include Fleet routes
