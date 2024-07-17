@@ -2,7 +2,6 @@
 
 namespace App\Feature\Contract\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Contract\Models\DriverRate;
 use App\Feature\Contract\Repositories\DriverRateRepository;
 use App\Feature\Shared\Models\UserContext;

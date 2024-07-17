@@ -2,7 +2,6 @@
 
 namespace App\Feature\User\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\User\Models\Privilege;
 use App\Feature\User\Repositories\PrivilegeRepository;
 use App\Feature\Shared\Models\UserContext;

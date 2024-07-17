@@ -2,7 +2,6 @@
 
 namespace App\Feature\Contract\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Contract\Models\LoaderRate;
 use App\Feature\Contract\Repositories\LoaderRateRepository;
 use App\Feature\Shared\Models\UserContext;

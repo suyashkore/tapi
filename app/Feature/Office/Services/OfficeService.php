@@ -2,7 +2,6 @@
 
 namespace App\Feature\Office\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Office\Models\Office;
 use App\Feature\Office\Repositories\OfficeRepository;
 use App\Feature\Shared\Models\UserContext;

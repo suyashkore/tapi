@@ -2,15 +2,10 @@
 
 namespace App\Feature\User\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\User\Models\UserOtp;
 use App\Feature\User\Repositories\UserOtpRepository;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\File;
-use Maatwebsite\Excel\Facades\Excel;
-use Exception;
 
 /**
  * Class UserOtpService
