@@ -107,7 +107,6 @@ class CustomerController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model Customer
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
@@ -168,38 +167,6 @@ class CustomerController extends Controller
         }
     }
 
-    //TODO: Remove below method if not required.
-    /**
-     * Upload an image for a Customer: U
-     *
-     * @param UploadImageRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    // public function uploadImage(UploadImageRequest $request, $id)
-    // {
-    //     Log::debug("Uploading an image for Customer with ID: $id in CustomerController");
-
-    //     // Validate request data
-    //     $validatedData = $request->validated();
-
-    //     // Extract user context from request
-    //     $userContext = $request->attributes->get('userContext');
-
-    //     try {
-    //         // Upload image and get the URL
-    //         $imageUrl = $this->customerService->uploadImage($id, $validatedData['img'], $userContext);
-    //         //TODO: Replace 'image_url' with the real field name
-    //         $response = response()->json(['image_url' => $imageUrl], 200);
-    //         Log::info('Customer uploadImage method response from CustomerController: ', $response->getData(true));
-    //         return $response;
-    //     } catch (\Exception $e) {
-    //         Log::error('Failed to upload image in CustomerController@uploadImage: ' . $e->getMessage());
-    //         return response()->json(['message' => 'Upload failed'], 500);
-    //     }
-    // }
-
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Customer (soft delete): U
      *
@@ -321,7 +288,6 @@ class CustomerController extends Controller
         // Extract user context from request
         $userContext = $request->attributes->get('userContext');
 
-        //TODO: Check if 'active' is a field in model Customer
         // Extract filters, sorting, and pagination parameters from request
         $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');

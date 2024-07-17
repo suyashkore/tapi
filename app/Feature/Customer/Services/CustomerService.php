@@ -2,7 +2,7 @@
 
 namespace App\Feature\Customer\Services;
 
-use App\Feature\Shared\Helpers\ImageHelper;
+use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Customer\Models\Customer;
 use App\Feature\Customer\Repositories\CustomerRepository;
 use App\Feature\Shared\Models\UserContext;
@@ -98,53 +98,6 @@ class CustomerService
         return null;
     }
 
-    //TODO: Remove below method if not required.
-    /**
-     * Upload an image for the Customer and update the image URL in the database: U
-     *
-     * @param int $id
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return string|null
-     * @throws Exception
-     */
-    public function uploadImage(int $id, $file, UserContext $userContext): ?string
-    {
-        Log::info('Uploading image for Customer in CustomerService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
-        $customer = $this->customerRepository->find($id, $userContext);
-        //TODO: Check the directory path and edit the folder name 'img' to something suitable
-        $storage_dir = 'public/images/customer/img';
-        $filename_prefix = 'customer';
-
-        if (!$customer) {
-            throw new Exception('Customer not found');
-        }
-
-        // generate a unique file name but keep the same extension
-        $fileName = $filename_prefix . '_orig_' . $id . '.' . $file->getClientOriginalExtension();
-
-        // Store the file
-        $path = $file->storeAs($storage_dir, $fileName);
-
-        if (!$path) {
-            throw new Exception('Failed to upload image');
-        }
-
-        // generate a unique file name but keep the same extension
-        $newFileName = $filename_prefix . '_' . $id . '.' . 'jpeg';
-
-        // Optimize and convert the image
-        $optimizedUrl = ImageHelper::optimizeAndConvertImage($storage_dir, $fileName, $newFileName );
-
-        //TODO: Replace or update 'image_url' with relevant field of model Customer
-        // Update the image URL in the database
-        $customer = $this->customerRepository->update($customer, ['image_url' => $optimizedUrl], $userContext);
-
-        //TODO: Replace or update 'image_url' with relevant field of model Customer
-        return $customer->image_url;
-    }
-
-    //TODO: Remove below method if not required.
     /**
      * Deactivate a Customer by setting its active field to false: U
      *
@@ -276,7 +229,6 @@ class CustomerService
 
             $customers = $data[0];
             $headers = array_shift($customers); // Remove the first row (headers)
-            // Check if you would like to exclude 'id'
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($customers as $index => $customerData) {

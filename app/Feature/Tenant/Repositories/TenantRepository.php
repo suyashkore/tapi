@@ -26,7 +26,6 @@ class TenantRepository
      */
     public static function tableName(): string
     {
-        //TODO: Match if the table name below is correct. Match with both the migration and the model files.
         return 'tenants'; // Hardcoded table name
     }
 
@@ -37,7 +36,6 @@ class TenantRepository
      */
     public static function pkName(): string
     {
-        //TODO: Match if the primary key name below is correct. Match with both the migration and the model files.
         return 'id'; // Hardcoded primary key name
     }
 

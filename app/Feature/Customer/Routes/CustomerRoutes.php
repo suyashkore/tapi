@@ -24,7 +24,6 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to update an existing Customer: U
     Route::put('/{id}', [CustomerController::class, 'update'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
-  
     // Route to deactivate a Customer (soft delete): U
     Route::patch('/{id}/deactivate', [CustomerController::class, 'deactivate'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
