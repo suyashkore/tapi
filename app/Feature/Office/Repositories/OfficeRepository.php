@@ -4,7 +4,7 @@ namespace App\Feature\Office\Repositories;
 
 use App\Feature\Shared\Helpers\DateHelper;
 use App\Feature\Office\Models\Office;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;

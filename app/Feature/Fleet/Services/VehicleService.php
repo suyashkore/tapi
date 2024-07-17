@@ -5,7 +5,7 @@ namespace App\Feature\Fleet\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Fleet\Models\Vehicle;
 use App\Feature\Fleet\Repositories\VehicleRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

@@ -4,7 +4,7 @@ namespace App\Feature\Station\Services;
 
 use App\Feature\Station\Models\StationCoverage;
 use App\Feature\Station\Repositories\StationCoverageRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

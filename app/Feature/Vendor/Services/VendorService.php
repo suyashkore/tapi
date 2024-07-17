@@ -4,7 +4,7 @@ namespace App\Feature\Vendor\Services;
 
 use App\Feature\Vendor\Models\Vendor;
 use App\Feature\Vendor\Repositories\VendorRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

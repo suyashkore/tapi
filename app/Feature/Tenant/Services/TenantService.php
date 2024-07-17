@@ -5,7 +5,7 @@ namespace App\Feature\Tenant\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Tenant\Models\Tenant;
 use App\Feature\Tenant\Repositories\TenantRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

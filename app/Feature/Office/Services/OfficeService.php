@@ -5,7 +5,7 @@ namespace App\Feature\Office\Services;
 use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Office\Models\Office;
 use App\Feature\Office\Repositories\OfficeRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

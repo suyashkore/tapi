@@ -4,7 +4,7 @@ namespace App\Feature\Vendor\Repositories;
 
 use App\Feature\Shared\Helpers\DateHelper;
 use App\Feature\Vendor\Models\VendorKyc;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;

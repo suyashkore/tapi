@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Feature\Shared\Services;
+namespace App\Feature\Shared\Models;
 
 class UserContext
 {

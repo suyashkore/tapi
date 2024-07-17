@@ -2,10 +2,10 @@ APP_NAME=tapi
 APP_ENV=local
 APP_DEBUG=false
 APP_URL=http://localhost:8000
-APP_KEY=base64:TUFZX1RIRV9GT1JDRV9CRV9XSVRIX1lPVQ==
+APP_KEY=base64:TUF
 
 # JWT Authentication
-JWT_SECRET=base64:TUFZX1RIRV9GT1JDRV9CRV9XSVRIX1lPVQ==
+JWT_SECRET=base64:TUF
 # JWT_PUBLIC_KEY=optionalPublicKeyPath
 # JWT_PRIVATE_KEY=optionalPrivateKeyPath
 # JWT_PASSPHRASE=optionalPassphrase
@@ -20,7 +20,7 @@ DB_CONNECTION=mysql
 # Use below if required or no other option
 # DATABASE_URL=mysql://root:password@127.0.0.1:13306/st_uapi
 DB_HOST=127.0.0.1
-DB_PORT=13306
+DB_PORT=3306
 DB_DATABASE=terpdb
 DB_USERNAME=root
 DB_PASSWORD=password
@@ -29,4 +29,12 @@ DB_PASSWORD=password
 
 LOG_CHANNEL=stack
 LOG_DEPRECATIONS_CHANNEL=null
-LOG_LEVEL=info
+LOG_LEVEL=debug
+
+SMS_BASE_URL=http://mobicomm.dove-sms.com/submitsms.jsp
+SMS_USER=XYZ
+SMS_KEY=xyz
+SMS_SENDER_ID=VTCSMS
+SMS_ACC_USAGE=1
+SMS_ENTITY_ID=10000000000000000000
+SMS_TEMP_ID=0000000000000000001

@@ -5,7 +5,7 @@ namespace App\Feature\User\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\User\Models\User;
 use App\Feature\User\Repositories\UserRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

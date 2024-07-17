@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 // Wrap all route definitions within the 'api' middleware group
 Route::middleware('api')->group(function () {
 
-    // Prefix all routes with 'stapi/v1' to indicate the API version
+    // Prefix all routes with 'tapi/v1' to indicate the API version
     Route::prefix('tapi/v1')->group(function () {
 
         // Include User Authentication routes
@@ -69,7 +69,7 @@ Route::middleware('api')->group(function () {
 
     });
 
-    // ... any additional API routes that are not part of the 'stapi/v1' prefix
+    // ... any additional API routes that are not part of the 'tapi/v1' prefix
 });
 
 // ... any additional route definitions outside the API context

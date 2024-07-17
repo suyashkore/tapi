@@ -4,7 +4,7 @@ namespace App\Feature\User\Services;
 
 use App\Feature\User\Models\Role;
 use App\Feature\User\Repositories\RoleRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

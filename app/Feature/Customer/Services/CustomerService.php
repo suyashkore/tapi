@@ -5,7 +5,7 @@ namespace App\Feature\Customer\Services;
 use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Customer\Models\Customer;
 use App\Feature\Customer\Repositories\CustomerRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;

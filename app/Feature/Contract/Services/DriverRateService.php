@@ -5,7 +5,7 @@ namespace App\Feature\Contract\Services;
 use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Contract\Models\DriverRate;
 use App\Feature\Contract\Repositories\DriverRateRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
@@ -229,7 +229,7 @@ class DriverRateService
 
             $driverRates = $data[0];
             $headers = array_shift($driverRates); // Remove the first row (headers)
- 
+
             $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
 
             foreach ($driverRates as $index => $driverRateData) {

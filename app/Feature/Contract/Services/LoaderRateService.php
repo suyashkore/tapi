@@ -5,7 +5,7 @@ namespace App\Feature\Contract\Services;
 use App\Feature\Shared\Helpers\ImageHelper;
 use App\Feature\Contract\Models\LoaderRate;
 use App\Feature\Contract\Repositories\LoaderRateRepository;
-use App\Feature\Shared\Services\UserContext;
+use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
