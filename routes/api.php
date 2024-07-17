@@ -25,6 +25,11 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/User/Routes/UserOtpRoutes.php');
         });
 
+         // Include Test routes
+         Route::group(['prefix' => 'tests'], function () {
+            require base_path('app/Feature/Shared/Tests/Routes/TestRoutes.php');
+        });
+
         // Include Company routes
         Route::group(['prefix' => 'companies'], function () {
             require base_path('app/Feature/Company/Routes/CompanyRoutes.php');
