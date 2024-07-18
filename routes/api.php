@@ -60,7 +60,7 @@ Route::middleware('api')->group(function () {
         });
 
         //Include Fleet routes
-        Route::group(['prefix' => 'fleet'], function () {
+        Route::group(['prefix' => 'fleets'], function () {
             require base_path('app/Feature/Fleet/Routes/VehicleRoutes.php');
         });
 
