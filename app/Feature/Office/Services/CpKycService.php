@@ -113,7 +113,7 @@ class CpKycService
         Log::info('Uploading file for CpKyc in CpKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $cpKyc = $this->cpKycRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/cpkycs/cpkyc'.$id;
+        $storage_dir = 'public/files/tms/tenant_' . ($userContext->tenantId ?? 0) . '/cpkycs/cpkyc'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);

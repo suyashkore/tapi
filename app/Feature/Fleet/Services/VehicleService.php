@@ -113,7 +113,7 @@ class VehicleService
         Log::info('Uploading file for Vehicle in VehicleService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $vehicle = $this->vehicleRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/vehicles/vehicle'.$id;
+        $storage_dir = 'public/files/tms/tenant_' . ($userContext->tenantId ?? 0) . '/vehicles/vehicle'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);

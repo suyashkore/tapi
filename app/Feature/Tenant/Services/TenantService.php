@@ -113,7 +113,7 @@ class TenantService
         Log::info('Uploading file for Tenant in TenantService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $tenant = $this->tenantRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/tenants/tenant'.$id;
+        $storage_dir = 'public/files/tms/tenant_'. ($userContext->tenantId ?? 0) .'/tenants/tenant'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);

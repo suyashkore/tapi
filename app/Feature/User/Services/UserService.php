@@ -114,7 +114,7 @@ class UserService
         Log::info('Uploading file for User in UserService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $user = $this->userRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/users/user'.$id;
+        $storage_dir = 'public/files/tms/tenant_' . ($userContext->tenantId ?? 0) . '/users/user'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);

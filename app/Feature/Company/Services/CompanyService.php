@@ -113,7 +113,7 @@ class CompanyService
         Log::info('Uploading file for Company in CompanyService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $company = $this->companyRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/companies/company'.$id;
+        $storage_dir = 'public/files/tms/tenant_'.($userContext->tenantId ?? 0).'/companies/company'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);
