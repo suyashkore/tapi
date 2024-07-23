@@ -70,6 +70,12 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/Station/Routes/StationCoverageRoutes.php');
         });
 
+        // Include geohierarchies routes
+        Route::group(['prefix' => 'geohierarchies'], function () {
+            require base_path('app/Feature/Station/Routes/GeoHierarchyRoutes.php');
+        });
+
+
         // ... include other route groups as necessary
 
     });
