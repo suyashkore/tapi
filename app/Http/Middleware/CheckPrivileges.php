@@ -24,7 +24,7 @@ class CheckPrivileges
 
         if (!$userContext || count(array_intersect($privileges, $userContext->privileges)) === 0) {
             // User does not have any of the required privileges
-            return response()->json(['message' => 'CheckPrivileges resulted in insufficient privileges'], 403);
+            return response()->json(['error' => 'CheckPrivileges resulted in insufficient privileges'], 403);
         }
 
         return $next($request);
