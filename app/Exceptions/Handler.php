@@ -8,6 +8,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Throwable;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class Handler extends ExceptionHandler
 {
@@ -35,6 +36,13 @@ class Handler extends ExceptionHandler
         });
     }
 
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $exception
+     * @return \Illuminate\Http\Response
+     */
     public function render($request, Throwable $exception)
     {
         // Handle JWT authentication exceptions
@@ -42,7 +50,20 @@ class Handler extends ExceptionHandler
             return response()->json(['error' => 'Token is invalid'], 401);
         } elseif ($exception instanceof TokenExpiredException) {
             return response()->json(['error' => 'Token has expired'], 401);
+        } elseif ($exception instanceof JWTException) {
+            return response()->json(['error' => 'Token is not provided'], 401);
         } elseif ($exception instanceof UnauthorizedHttpException) {
+            // Handle the UnauthorizedHttpException which often wraps other exceptions
+            $previousException = $exception->getPrevious();
+
+            if ($previousException instanceof TokenExpiredException) {
+                return response()->json(['error' => 'Token has expired'], 401);
+            } elseif ($previousException instanceof TokenInvalidException) {
+                return response()->json(['error' => 'Token is invalid'], 401);
+            } elseif ($previousException instanceof JWTException) {
+                return response()->json(['error' => 'Token is not provided'], 401);
+            }
+
             return response()->json(['error' => 'Unauthorized - missing or malformed token'], 401);
         }
 
@@ -55,6 +76,12 @@ class Handler extends ExceptionHandler
         return parent::render($request, $exception);
     }
 
+    /**
+     * Report or log an exception.
+     *
+     * @param  \Throwable  $exception
+     * @return void
+     */
     public function report(Throwable $exception)
     {
         parent::report($exception);
