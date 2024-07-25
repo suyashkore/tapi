@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Feature\Station;
+namespace App\Feature\Station\models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -8,7 +8,7 @@ use App\Feature\User\Models\User;
 
 class GeoHierarchy extends Model
 {
-    use SoftDeletes;
+    // use SoftDeletes;
 
     // The table associated with the model
     protected $table = 'geo_hierarchy';
