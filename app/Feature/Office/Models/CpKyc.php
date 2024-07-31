@@ -69,6 +69,7 @@ use App\Feature\Company\Models\Company;
  * @property string|null $bank2_account_num
  * @property string|null $bank2_ifsc_code
  * @property string|null $bank2_doc_url
+ * @property string|null $default_bank
  * @property \Illuminate\Support\Carbon|null $date_of_reg
  * @property string|null $doc1_name
  * @property string|null $doc1_url
@@ -205,6 +206,7 @@ class CpKyc extends Model
         'bank2_account_num',
         'bank2_ifsc_code',
         'bank2_doc_url',
+        'default_bank',
         'date_of_reg',
         'doc1_name',
         'doc1_url',

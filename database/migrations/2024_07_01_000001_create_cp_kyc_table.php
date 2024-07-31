@@ -77,6 +77,7 @@ class CreateCpKycTable extends Migration
             $table->string('bank2_account_num', 24)->nullable(); // Bank2 account number
             $table->string('bank2_ifsc_code', 16)->nullable(); // Bank2 IFSC code
             $table->string('bank2_doc_url', 255)->nullable(); // Bank2 document URL
+            $table->string('default_bank', 8)->nullable();
             $table->dateTime('date_of_reg')->nullable(); // Date of registration
             $table->string('doc1_name', 48)->nullable(); // Document1 name
             $table->string('doc1_url', 255)->nullable(); // Document1 URL

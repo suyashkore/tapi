@@ -47,7 +47,7 @@ class CustomerUpdateRequest extends FormRequest
         } else {
             // Log an error or throw an exception if tenant_id cannot be determined
             Log::error('Tenant ID missing or invalid in userContext', ['userContext' => $userContext]);
-            
+
         }
     }
 
@@ -77,7 +77,7 @@ class CustomerUpdateRequest extends FormRequest
             'payment_types' => 'sometimes|required|json',
             'industry_type' => 'nullable|string|max:128',
             'c_type' => 'sometimes|required|string|in:CONTRACTUAL,RETAIL|max:16',
-            'c_subtype' => 'nullable|string|in:CONSIGNOR,CONSIGNEE|max:24',
+            'c_subtype' => 'nullable|string|in:CUST_GROUP,CONSIGNOR,CONSIGNEE|max:24',
             'pan_num' => 'nullable|string|max:16',
             'gst_num' => 'nullable|string|max:16',
             'country' => 'nullable|string|max:64',

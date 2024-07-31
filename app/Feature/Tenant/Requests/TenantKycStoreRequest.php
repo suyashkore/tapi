@@ -97,6 +97,7 @@ class TenantKycStoreRequest extends FormRequest
             'bank2_account_num' => 'nullable|string|max:24',
             'bank2_ifsc_code' => 'nullable|string|max:16',
             'bank2_doc_url' => 'nullable|string|max:255',
+            'default_bank' => 'nullable|string|in:BANK1,BANK2|max:8',
             'date_of_reg' => 'nullable|date',
             'doc1_name' => 'nullable|string|max:48',
             'doc1_url' => 'nullable|string|max:255',

@@ -74,6 +74,7 @@ class CreateTenantKycTable extends Migration
             $table->string('bank2_account_num', 24)->nullable();
             $table->string('bank2_ifsc_code', 16)->nullable();
             $table->string('bank2_doc_url', 255)->nullable();
+            $table->string('default_bank', 8)->nullable();
             $table->dateTime('date_of_reg')->nullable();
             $table->string('doc1_name', 48)->nullable();
             $table->string('doc1_url', 255)->nullable();
