@@ -4,11 +4,13 @@ namespace App\Feature\Tenant\Services;
 
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Tenant\Models\TenantKyc;
+use App\Feature\Tenant\Requests\TenantKycStoreRequest;
 use App\Feature\Tenant\Repositories\TenantKycRepository;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -248,72 +250,135 @@ class TenantKycService
         }
     }
 
-    /**
-     * Import TenantKycs from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing TenantKycs from xlsx in TenantKycService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+/**
+ * Import TenantKycs from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing TenantKycs from xlsx in TenantKycService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
-            }
-
-            $tenantKycs = $data[0];
-            $headers = array_shift($tenantKycs); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($tenantKycs as $index => $tenantKycData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $tenantKycData = array_combine($headers, $tenantKycData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($tenantKycData[$excludeColumn]);
-                    }
-
-                    $this->tenantKycRepository->create($tenantKycData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import tenantKyc at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import tenantKyc at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('TenantKycs import completed with errors');
-            }else{
-                Log::debug('TenantKycs imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing TenantKycs: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+    try {
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
         }
 
-        return $importResult;
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray
+        {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $file);
+
+        Log::info('Excel data read successfully', ['data' => $data]);
+
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
+        }
+
+        $tenantKycs = $data[0];
+        $headers = array_shift($tenantKycs); // Remove the first row (headers)
+
+        foreach ($tenantKycs as $index => $tenantKycData) {
+            try {
+                $tenantKycData = array_combine($headers, $tenantKycData);
+
+                // Normalize enum fields
+                $enumFields = [
+                    'bank1_account_type' => ['CURRENT', 'SAVINGS'],
+                    'bank2_account_type' => ['CURRENT', 'SAVINGS'],
+                    'status' => ['CREATED', 'APPROVED', 'REJECTED', 'PENDING_UPDATE', 'PENDING_APPROVAL']
+                ];
+
+                foreach ($enumFields as $field => $validValues) {
+                    if (isset($tenantKycData[$field])) {
+                        // Normalize values: trim and convert to uppercase
+                        $tenantKycData[$field] = strtoupper(trim($tenantKycData[$field]));
+                        Log::info("Normalized $field value: " . $tenantKycData[$field]); // Add this line for logging
+                        if (!in_array($tenantKycData[$field], $validValues)) {
+                            throw new Exception("Invalid value for $field: " . $tenantKycData[$field]);
+                        }
+                    }
+                }
+
+                // Extract tenant_id from userContext if not present in tenantKycData
+                if (!isset($tenantKycData['tenant_id']) || $tenantKycData['tenant_id'] === null) {
+                    $tenantKycData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Ensure correct data types for validation
+                $stringFields = ['owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'pincode', 'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num', 'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile', 'key_personnel3_mobile', 'key_personnel4_mobile'];
+                foreach ($stringFields as $field) {
+                    if (isset($tenantKycData[$field]) && !is_string($tenantKycData[$field])) {
+                        $tenantKycData[$field] = (string) $tenantKycData[$field];
+                    }
+                }
+
+                // Validate the tenantKyc data using TenantKycStoreRequest
+                $request = new TenantKycStoreRequest();
+                $request->merge($tenantKycData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the tenantKyc data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for tenantKyc at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for tenantKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the tenantKyc
+                $this->tenantKycRepository->create($tenantKycData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import tenantKyc at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import tenantKyc at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('TenantKycs import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('TenantKycs imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing TenantKycs: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
 
     /**
      * Export TenantKycs to an Excel file based on the given filters.

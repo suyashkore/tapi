@@ -5,9 +5,11 @@ namespace App\Feature\User\Services;
 use App\Feature\User\Models\Privilege;
 use App\Feature\User\Repositories\PrivilegeRepository;
 use App\Feature\Shared\Models\UserContext;
+use App\Feature\User\Requests\PrivilegeStoreRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -178,73 +180,117 @@ class PrivilegeService
         }
     }
 
-    /**
-     * Import Privileges from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing Privileges from xlsx in PrivilegeService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+/**
+ * Import Privileges from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing Privileges from xlsx in PrivilegeService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
-            }
-
-            $privileges = $data[0];
-            $headers = array_shift($privileges); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($privileges as $index => $privilegeData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $privilegeData = array_combine($headers, $privilegeData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($privilegeData[$excludeColumn]);
-                    }
-
-                    $this->privilegeRepository->create($privilegeData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import privilege at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import privilege at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Privileges import completed with errors');
-            }else{
-                Log::debug('Privileges imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing Privileges: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
         }
 
-        return $importResult;
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $file);
+
+        Log::info('Excel data read successfully', ['data' => $data]);
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
+        }
+
+        $privileges = $data[0];
+        $headers = array_shift($privileges); // Remove the first row (headers)
+        $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
+        foreach ($privileges as $index => $privilegeData) {
+            try {
+                // Combine the headers with the privilege data
+                $privilegeData = array_combine($headers, $privilegeData);
+
+                // Remove excluded columns
+                foreach ($excludeColumns as $excludeColumn) {
+                    unset($privilegeData[$excludeColumn]);
+                }
+
+                // Extract tenant_id from userContext if not present in privilegeData
+                if (!isset($privilegeData['tenant_id']) || $privilegeData['tenant_id'] === null) {
+                    $privilegeData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Validate the privilege data using PrivilegeStoreRequest
+                $request = new PrivilegeStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($privilegeData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the privilege data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for privilege at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for privilege at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the privilege
+                $this->privilegeRepository->create($privilegeData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import privilege at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import privilege at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Privileges import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Privileges imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing Privileges: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
 
     /**
      * Export Privileges to an Excel file based on the given filters.

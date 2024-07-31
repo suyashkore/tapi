@@ -5,12 +5,15 @@ namespace App\Feature\Tenant\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Tenant\Models\Tenant;
 use App\Feature\Tenant\Repositories\TenantRepository;
+use App\Feature\Tenant\Requests\TenantStoreRequest;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
+use Illuminate\Support\Facades\Validator;
+
 
 /**
  * Class TenantService
@@ -248,72 +251,118 @@ class TenantService
         }
     }
 
-    /**
-     * Import tenants from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing tenants from xlsx in TenantService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId,]]);
+   /**
+ * Import tenants from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing tenants from xlsx in TenantService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId,
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
-            }
-
-            $tenants = $data[0];
-            $headers = array_shift($tenants); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($tenants as $index => $tenantData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $tenantData = array_combine($headers, $tenantData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($tenantData[$excludeColumn]);
-                    }
-
-                    $this->tenantRepository->create($tenantData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import tenant at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import tenant at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Tenants import completed with errors');
-            }else{
-                Log::debug('Tenants imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing tenants: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
         }
 
-        return $importResult;
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $file);
+
+        Log::info('Excel data read successfully', ['data' => $data]);
+
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
+        }
+
+        $tenants = $data[0];
+        $headers = array_shift($tenants); // Remove the first row (headers)
+
+        foreach ($tenants as $index => $tenantData) {
+            try {
+                // Combine the headers with the tenant data
+                $tenantData = array_combine($headers, $tenantData);
+
+                // Exclude certain columns
+                $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+                foreach ($excludeColumns as $excludeColumn) {
+                    unset($tenantData[$excludeColumn]);
+                }
+
+                // Extract tenant_id from userContext if not present in tenantData
+                if (!isset($tenantData['tenant_id']) || $tenantData['tenant_id'] === null) {
+                    $tenantData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Validate the tenant data using TenantStoreRequest
+                $request = new TenantStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($tenantData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the tenant data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for tenant at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for tenant at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the tenant
+                $tenant = $this->tenantRepository->create($tenantData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import tenant at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import tenant at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Tenants import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Tenants imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing tenants: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
 
     /**
      * Export tenants to an Excel file based on the given filters.

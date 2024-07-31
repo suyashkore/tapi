@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use App\Feature\User\Requests\RoleStoreRequest;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -229,128 +229,151 @@ class RoleService
         }
     }
 
-    /**
-     * Import Roles from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing Roles from xlsx in RoleService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+/**
+ * Import Roles from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing Roles from xlsx in RoleService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
-            }
-
-            $roles = $data[0];
-            $headers = array_shift($roles); // Remove the first row (headers)
-
-            foreach ($roles as $index => $roleData) {
-                try {
-                    // Combine the headers with the role data
-                    $roleData = array_combine($headers, $roleData);
-
-                    // Extract tenant_id from userContext if not present in roleData
-                    if (!isset($roleData['tenant_id']) || $roleData['tenant_id'] === null) {
-                        $roleData['tenant_id'] = $userContext->tenantId;
-                    }
-
-                    // Decode the privileges JSON string
-                    $privilegesJson = $roleData['privileges'];
-                    $privilegesArray = json_decode($privilegesJson, true);
-
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        throw new Exception('Invalid JSON in privileges field at row ' . ($index + 2));
-                    }
-
-                    // Validate the decoded privileges
-                    $privilegeIds = array_column($privilegesArray, 'id');
-                    $privilegeValidation = Validator::make(
-                        ['privileges' => $privilegeIds],
-                        ['privileges.*' => 'exists:privileges,id']
-                    );
-
-                    if ($privilegeValidation->fails()) {
-                        $errors = $privilegeValidation->errors()->all();
-                        Log::error('Validation failed for privileges at row ' . ($index + 2) . ': ', $errors);
-                        $importResult['errors'][] = 'Validation failed for privileges at row ' . ($index + 2) . ': ' . implode(', ', $errors);
-                        continue;
-                    }
-
-                    // Define validation rules for role data
-                    $rules = [
-                        'tenant_id' => 'nullable|exists:tenants,id',
-                        'name' => [
-                            'required',
-                            'string',
-                            'max:24',
-                            Rule::unique('roles')->where(function ($query) use ($roleData) {
-                                return $query->where('tenant_id', $roleData['tenant_id']);
-                            })
-                        ],
-                        'description' => 'nullable|string|max:255'
-                    ];
-
-                    // Validate the role data
-                    $validator = Validator::make($roleData, $rules);
-
-                    if ($validator->fails()) {
-                        // Collect validation errors
-                        $errors = $validator->errors()->all();
-                        Log::error('Validation failed for role at row ' . ($index + 2) . ': ', $errors);
-                        $importResult['errors'][] = 'Validation failed for role at row ' . ($index + 2) . ': ' . implode(', ', $errors);
-                        continue;
-                    }
-
-                    // Remove non-role fields before creation
-                    unset($roleData['privileges']);
-
-                    // Create the role
-                    $role = $this->roleRepository->create($roleData, $userContext);
-
-                    // Assign privileges to the role
-                    $this->assignPrivilegesToRole($role, $privilegeIds);
-
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import role at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import role at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Roles import completed with errors');
-            }else{
-                Log::debug('Roles imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing Roles: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
         }
 
-        return $importResult;
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $file);
+
+        Log::info('Excel data read successfully', ['data' => $data]);
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
+        }
+
+        $roles = $data[0];
+        $headers = array_shift($roles); // Remove the first row (headers)
+
+        foreach ($roles as $index => $roleData) {
+            try {
+                // Combine the headers with the role data
+                $roleData = array_combine($headers, $roleData);
+
+                // Extract tenant_id from userContext if not present in roleData
+                if (!isset($roleData['tenant_id']) || $roleData['tenant_id'] === null) {
+                    $roleData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Decode the privileges JSON string
+                $privilegesJson = $roleData['privileges'] ?? '[]'; // Default to empty array if not set
+                Log::info('Privileges JSON at row ' . ($index + 2), ['privilegesJson' => $privilegesJson]);
+                if (is_string($privilegesJson)) {
+                    $privilegesArray = json_decode($privilegesJson, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new Exception('Invalid JSON in privileges field at row ' . ($index + 2) . ': ' . json_last_error_msg());
+                    }
+                } else {
+                    throw new Exception('Privileges field is not a string at row ' . ($index + 2));
+                }
+
+                // Validate the decoded privileges
+                if (!is_array($privilegesArray)) {
+                    throw new Exception('Privileges field must be an array at row ' . ($index + 2));
+                }
+
+                Log::info('Privileges array at row ' . ($index + 2), ['privilegesArray' => $privilegesArray]);
+
+                $privilegeIds = array_column($privilegesArray, 'id');
+                $privilegeValidation = Validator::make(
+                    ['privileges' => $privilegeIds],
+                    ['privileges' => 'array', 'privileges.*' => 'exists:privileges,id']
+                );
+
+                if ($privilegeValidation->fails()) {
+                    $errors = $privilegeValidation->errors()->all();
+                    Log::error('Validation failed for privileges at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for privileges at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Validate the role data using RoleStoreRequest
+                $request = new RoleStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($roleData);
+                $request->merge(['privileges' => $privilegeIds]); // Add privileges as array
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the role data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for role at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for role at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Remove non-role fields before creation
+                unset($roleData['privileges']);
+
+                // Create the role
+                $role = $this->roleRepository->create($roleData, $userContext);
+
+                // Assign privileges to the role
+                $this->assignPrivilegesToRole($role, $privilegeIds);
+
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import role at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import role at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Roles import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Roles imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing Roles: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
 
     /**
      * Export Roles to an Excel file based on the given filters.

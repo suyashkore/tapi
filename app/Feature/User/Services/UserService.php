@@ -5,6 +5,8 @@ namespace App\Feature\User\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\User\Models\User;
 use App\Feature\User\Repositories\UserRepository;
+use App\Feature\User\Requests\UserStoreRequest;
+use Illuminate\Support\Facades\Validator;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -249,78 +251,118 @@ class UserService
         }
     }
 
-    /**
-     * Import Users from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing Users from xlsx in UserService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+/**
+ * Import Users from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing Users from xlsx in UserService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
+        }
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
             }
+        }, $file);
 
-            $users = $data[0];
-            $headers = array_shift($users); // Remove the first row (headers)
-
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($users as $index => $userData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $userData = array_combine($headers, $userData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($userData[$excludeColumn]);
-                    }
-
-                    // Set the default password hash for the user
-                    $userData['password_hash'] = Hash::make('007');
-                    // Set the default value for failed_login_attempts
-                    $userData['failed_login_attempts'] = 0;
-
-                    $this->userRepository->create($userData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import user at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import user at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Users import completed with errors');
-            }else{
-                Log::debug('Users imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing Users: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+        Log::info('Excel data read successfully', ['data' => $data]);
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
         }
 
-        return $importResult;
+        $users = $data[0];
+        $headers = array_shift($users); // Remove the first row (headers)
+        $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
+        foreach ($users as $index => $userData) {
+            try {
+                // Combine the headers with the user data
+                $userData = array_combine($headers, $userData);
+
+                foreach ($excludeColumns as $excludeColumn) {
+                    unset($userData[$excludeColumn]);
+                }
+
+                // Set default values for password and failed_login_attempts
+                if (!isset($userData['password'])) {
+                    $userData['password'] = '12345678'; // Default password
+                }
+                $userData['password_hash'] = Hash::make($userData['password']);
+                $userData['failed_login_attempts'] = 0;
+
+                // Validate the user data using UserStoreRequest
+                $request = new UserStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($userData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the user data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for user at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for user at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the user
+                $this->userRepository->create($userData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import user at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import user at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Users import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Users imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing Users: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
+
 
     /**
      * Export Users to an Excel file based on the given filters.

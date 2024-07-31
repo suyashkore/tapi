@@ -5,10 +5,12 @@ namespace App\Feature\Company\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Company\Models\Company;
 use App\Feature\Company\Repositories\CompanyRepository;
+use App\Feature\Company\Requests\CompanyStoreRequest;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -249,71 +251,109 @@ class CompanyService
     }
 
     /**
-     * Import Companies from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing Companies from xlsx in CompanyService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+ * Import Companies from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing Companies from xlsx in CompanyService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
+        }
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray
+        {
+            public function array(array $array)
+            {
+                return $array;
             }
+        }, $file);
 
-            $companys = $data[0];
-            $headers = array_shift($companys); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($companys as $index => $companyData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $companyData = array_combine($headers, $companyData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($companyData[$excludeColumn]);
-                    }
-
-                    $this->companyRepository->create($companyData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import company at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import company at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Companies import completed with errors');
-            }else{
-                Log::debug('Companies imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing Companies: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+        Log::info('Excel data read successfully', ['data' => $data]);
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
         }
 
-        return $importResult;
+        $companies = $data[0];
+        $headers = array_shift($companies); // Remove the first row (headers)
+
+        foreach ($companies as $index => $companyData) {
+            try {
+                // Combine the headers with the company data
+                $companyData = array_combine($headers, $companyData);
+
+                // Extract tenant_id from userContext if not present in companyData
+                if (!isset($companyData['tenant_id']) || $companyData['tenant_id'] === null) {
+                    $companyData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Validate the company data using CompanyStoreRequest
+                $request = new CompanyStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($companyData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the company data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for company at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for company at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the company
+                $company = $this->companyRepository->create($companyData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import company at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import company at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Companies import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Companies imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing Companies: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
 
     /**
      * Export Companies to an Excel file based on the given filters.

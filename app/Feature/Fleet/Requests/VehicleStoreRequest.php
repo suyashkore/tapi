@@ -84,8 +84,8 @@ class VehicleStoreRequest extends FormRequest
             'fitness_cert_num' => 'nullable|string|max:32',
             'fitness_cert_expiry' => 'nullable|date',
             'fitness_cert_url' => 'nullable|url|max:255',
-            'vehicle_contact_mobile1' => 'nullable|string|max:16',
-            'vehicle_contact_mobile2' => 'nullable|string|max:16',
+            'vehicle_contact_mobile1' => 'nullable|numeric|digits:10',
+            'vehicle_contact_mobile2' => 'nullable|numeric|digits:10',
             'active' => 'boolean',
             'status' => 'required|string|in:CREATED,APPROVED,REJECTED,PENDING_UPDATE,PENDING_APPROVAL|max:24',
             'note' => 'nullable|string|max:255'

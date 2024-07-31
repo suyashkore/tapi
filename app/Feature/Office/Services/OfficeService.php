@@ -3,12 +3,14 @@
 namespace App\Feature\Office\Services;
 
 use App\Feature\Office\Models\Office;
+use App\Feature\Office\Requests\OfficeStoreRequest;
 use App\Feature\Office\Repositories\OfficeRepository;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
 use Exception;
 
 /**
@@ -166,7 +168,8 @@ class OfficeService
 
         try {
             // Generate the template using Maatwebsite Excel
-            Excel::store(new class($headers) implements \Maatwebsite\Excel\Concerns\FromArray {
+            Excel::store(new class($headers) implements \Maatwebsite\Excel\Concerns\FromArray
+            {
                 protected $headers;
 
                 public function __construct(array $headers)
@@ -188,7 +191,6 @@ class OfficeService
             }
 
             return $templatePath;
-
         } catch (Exception $e) {
             Log::error('Error generating XLSX template: ' . $e->getMessage());
             throw $e;
@@ -205,7 +207,14 @@ class OfficeService
      */
     public function importFromXlsx($file, UserContext $userContext): array
     {
-        Log::info('Importing Offices from xlsx in OfficeService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        Log::info('Importing Offices from xlsx in OfficeService', [
+            'userContext' => [
+                'userId' => $userContext->userId,
+                'tenantId' => $userContext->tenantId,
+                'loginId' => $userContext->loginId
+            ],
+            'file' => $file
+        ]);
 
         $importResult = [
             'success' => true,
@@ -215,31 +224,62 @@ class OfficeService
         ];
 
         try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            // Check if the file exists and is readable
+            if (!file_exists($file) || !is_readable($file)) {
+                throw new Exception('The file does not exist or is not readable.');
+            }
+            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray
+            {
                 public function array(array $array)
                 {
                     return $array;
                 }
             }, $file);
 
+            Log::info('Excel data read successfully', ['data' => $data]);
             if (empty($data) || !isset($data[0])) {
                 throw new Exception('The uploaded file is empty or invalid.');
             }
 
             $offices = $data[0];
             $headers = array_shift($offices); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
 
             foreach ($offices as $index => $officeData) {
                 try {
-                    // Skip rows that don't have the required columns
+                    // Combine the headers with the office data
                     $officeData = array_combine($headers, $officeData);
 
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($officeData[$excludeColumn]);
+                    // Extract tenant_id from userContext if not present in officeData
+                    if (!isset($officeData['tenant_id']) || $officeData['tenant_id'] === null) {
+                        $officeData['tenant_id'] = $userContext->tenantId;
                     }
 
-                    $this->officeRepository->create($officeData, $userContext);
+                    // Validate the office data using OfficeStoreRequest
+                    $request = new OfficeStoreRequest();
+
+                    // Manually set the data and user context on the request
+                    $request->merge($officeData);
+                    $request->setUserResolver(function () use ($userContext) {
+                        return $userContext;
+                    });
+
+                    // Get validation rules
+                    $rules = $request->rules();
+
+                    // Validate the office data
+                    $validator = Validator::make($request->all(), $rules);
+
+                    if ($validator->fails()) {
+                        // Collect validation errors
+                        $errors = $validator->errors()->all();
+                        Log::error('Validation failed for office at row ' . ($index + 2) . ': ', $errors);
+                        $importResult['errors'][] = 'Validation failed for office at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                        continue;
+                    }
+
+                    // Create the office
+                    $office = $this->officeRepository->create($officeData, $userContext);
                     $importResult['imported_count']++;
                 } catch (Exception $e) {
                     Log::error('Failed to import office at row ' . ($index + 2) . ': ' . $e->getMessage());
@@ -249,8 +289,8 @@ class OfficeService
             if (!empty($importResult['errors'])) {
                 $importResult['success'] = false;
                 $importResult['message'] = 'Import completed with errors';
-                Log::error('Offices import completed with errors');
-            }else{
+                Log::error('Offices import completed with errors', ['errors' => $importResult['errors']]);
+            } else {
                 Log::debug('Offices imported successfully');
             }
         } catch (Exception $e) {
@@ -301,7 +341,8 @@ class OfficeService
 
         try {
             // Generate the Excel file using Maatwebsite Excel
-            Excel::store(new class($headers, $officesArray) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            Excel::store(new class($headers, $officesArray) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings
+            {
                 protected $headers;
                 protected $offices;
 
@@ -330,7 +371,6 @@ class OfficeService
             }
 
             return $filePath;
-
         } catch (Exception $e) {
             Log::error('Error exporting Offices to XLSX: ' . $e->getMessage());
             throw $e;

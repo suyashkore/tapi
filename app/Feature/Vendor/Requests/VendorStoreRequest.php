@@ -57,7 +57,7 @@ class VendorStoreRequest extends FormRequest
             'legal_name' => 'nullable|string|max:128',
             'legal_name_reg' => 'nullable|string|max:255',
             'v_type' => 'required|string|in:FUEL_VENDOR,FLEET_VENDOR,LOADER,DRIVER,OTHERS|max:24',
-            'mobile' => 'required|string|max:16',
+            'mobile' => 'required|numeric|digits:10',
             'email' => 'nullable|string|email|max:64',
             'contracting_office_id' => 'required|exists:offices,id',
             'erp_code' => 'nullable|string|max:24',

@@ -5,10 +5,12 @@ namespace App\Feature\Fleet\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Fleet\Models\Vehicle;
 use App\Feature\Fleet\Repositories\VehicleRepository;
+use App\Feature\Fleet\Requests\VehicleStoreRequest;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -248,72 +250,112 @@ class VehicleService
         }
     }
 
-    /**
-     * Import Vehicles from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing Vehicles from xlsx in VehicleService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+  /**
+ * Import Vehicles from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing Vehicles from xlsx in VehicleService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
+    try {
+        // Check if the file exists and is readable
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
+        }
+        
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
             }
+        }, $file);
 
-            $vehicles = $data[0];
-            $headers = array_shift($vehicles); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($vehicles as $index => $vehicleData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $vehicleData = array_combine($headers, $vehicleData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($vehicleData[$excludeColumn]);
-                    }
-
-                    $this->vehicleRepository->create($vehicleData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import vehicle at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import vehicle at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('Vehicles import completed with errors');
-            }else{
-                Log::debug('Vehicles imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing Vehicles: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+        Log::info('Excel data read successfully', ['data' => $data]);
+        
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
         }
 
-        return $importResult;
+        $vehicles = $data[0];
+        $headers = array_shift($vehicles); // Remove the first row (headers)
+        $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
+        foreach ($vehicles as $index => $vehicleData) {
+            try {
+                // Combine the headers with the vehicle data
+                $vehicleData = array_combine($headers, $vehicleData);
+
+                // Remove excluded columns
+                foreach ($excludeColumns as $excludeColumn) {
+                    unset($vehicleData[$excludeColumn]);
+                }
+
+                // Validate the vehicle data using VehicleStoreRequest
+                $request = new VehicleStoreRequest();
+
+                // Manually set the data and user context on the request
+                $request->merge($vehicleData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the vehicle data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    // Collect validation errors
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for vehicle at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for vehicle at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the vehicle
+                $this->vehicleRepository->create($vehicleData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import vehicle at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import vehicle at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('Vehicles import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('Vehicles imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing Vehicles: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
 
     /**
      * Export Vehicles to an Excel file based on the given filters.

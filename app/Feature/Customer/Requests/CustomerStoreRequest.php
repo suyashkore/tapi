@@ -47,7 +47,7 @@ class CustomerStoreRequest extends FormRequest
         } else {
             // Log an error or throw an exception if tenant_id cannot be determined
             Log::error('Tenant ID missing or invalid in userContext', ['userContext' => $userContext]);
-
+            
         }
     }
 
@@ -83,16 +83,16 @@ class CustomerStoreRequest extends FormRequest
             'district' => 'nullable|string|max:64',
             'taluka' => 'nullable|string|max:64',
             'city' => 'required|string|max:64',
-            'pincode' => 'required|string|max:16',
-            'latitude' => 'nullable|string|max:16',
-            'longitude' => 'nullable|string|max:16',
+            'pincode' => 'required|integer|digits:6',
+            'latitude' => 'required|numeric|min:-90|max:90',
+            'longitude' => 'required|numeric|min:-180|max:180',
             'address' => 'nullable|string|max:255',
             'address_reg' => 'nullable|string|max:512',
-            'mobile' => 'nullable|string|max:16',
+            'mobile' => 'nullable|integer|digits:10',
             'tel_num' => 'nullable|string|max:16',
             'email' => 'nullable|string|email|max:64',
             'billing_contact_person' => 'nullable|string|max:48',
-            'billing_mobile' => 'required|string|max:16',
+            'billing_mobile' => 'required|integer|digits:10',
             'billing_email' => 'required|string|email|max:64',
             'billing_address' => 'required|string|max:255',
             'billing_address_reg' => 'nullable|string|max:512',

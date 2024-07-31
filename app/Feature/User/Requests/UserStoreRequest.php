@@ -60,8 +60,8 @@ class UserStoreRequest extends FormRequest
             ],
             'mobile' => [
                 'required',
-                'string',
-                'max:16',
+                'integer',
+                'digits:10',
                 Rule::unique('users')->where(function ($query) {
                     return $query->where('tenant_id', $this->tenant_id);
                 })

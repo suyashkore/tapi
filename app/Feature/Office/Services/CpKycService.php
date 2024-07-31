@@ -5,10 +5,12 @@ namespace App\Feature\Office\Services;
 use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\Office\Models\CpKyc;
 use App\Feature\Office\Repositories\CpKycRepository;
+use App\Feature\Office\Requests\CpKycStoreRequest;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
@@ -248,72 +250,138 @@ class CpKycService
         }
     }
 
-    /**
-     * Import CpKycs from an Excel file.
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param UserContext $userContext
-     * @return array
-     * @throws Exception
-     */
-    public function importFromXlsx($file, UserContext $userContext): array
-    {
-        Log::info('Importing CpKycs from xlsx in CpKycService', ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+/**
+ * Import CpKycs from an Excel file.
+ *
+ * @param \Illuminate\Http\UploadedFile $file
+ * @param UserContext $userContext
+ * @return array
+ * @throws Exception
+ */
+public function importFromXlsx($file, UserContext $userContext): array
+{
+    Log::info('Importing CpKycs from xlsx in CpKycService', [
+        'userContext' => [
+            'userId' => $userContext->userId,
+            'tenantId' => $userContext->tenantId,
+            'loginId' => $userContext->loginId
+        ],
+        'file' => $file
+    ]);
 
-        $importResult = [
-            'success' => true,
-            'message' => 'Import completed successfully',
-            'imported_count' => 0,
-            'errors' => []
-        ];
+    $importResult = [
+        'success' => true,
+        'message' => 'Import completed successfully',
+        'imported_count' => 0,
+        'errors' => []
+    ];
 
-        try {
-            $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            }, $file);
-
-            if (empty($data) || !isset($data[0])) {
-                throw new Exception('The uploaded file is empty or invalid.');
-            }
-
-            $cpKycs = $data[0];
-            $headers = array_shift($cpKycs); // Remove the first row (headers)
-            $excludeColumns = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'];
-
-            foreach ($cpKycs as $index => $cpKycData) {
-                try {
-                    // Skip rows that don't have the required columns
-                    $cpKycData = array_combine($headers, $cpKycData);
-
-                    foreach ($excludeColumns as $excludeColumn) {
-                        unset($cpKycData[$excludeColumn]);
-                    }
-
-                    $this->cpKycRepository->create($cpKycData, $userContext);
-                    $importResult['imported_count']++;
-                } catch (Exception $e) {
-                    Log::error('Failed to import cpKyc at row ' . ($index + 2) . ': ' . $e->getMessage());
-                    $importResult['errors'][] = 'Failed to import cpKyc at row ' . ($index + 2) . ': ' . $e->getMessage();
-                }
-            }
-            if (!empty($importResult['errors'])) {
-                $importResult['success'] = false;
-                $importResult['message'] = 'Import completed with errors';
-                Log::error('CpKycs import completed with errors');
-            }else{
-                Log::debug('CpKycs imported successfully');
-            }
-        } catch (Exception $e) {
-            Log::error('Error importing CpKycs: ' . $e->getMessage());
-            $importResult['success'] = false;
-            $importResult['message'] = 'Import failed: ' . $e->getMessage();
+    try {
+        if (!file_exists($file) || !is_readable($file)) {
+            throw new Exception('The file does not exist or is not readable.');
         }
 
-        return $importResult;
+        $data = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray
+        {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $file);
+
+        Log::info('Excel data read successfully', ['data' => $data]);
+
+        if (empty($data) || !isset($data[0])) {
+            throw new Exception('The uploaded file is empty or invalid.');
+        }
+
+        $cpKycs = $data[0];
+        $headers = array_shift($cpKycs); // Remove the first row (headers)
+
+        foreach ($cpKycs as $index => $cpKycData) {
+            try {
+                $cpKycData = array_combine($headers, $cpKycData);
+
+                // Normalize enum fields
+                $enumFields = [
+                    'bank1_account_type' => ['CURRENT', 'SAVINGS'],
+                    'bank2_account_type' => ['CURRENT', 'SAVINGS'],
+                    // Add other enum fields if any
+                ];
+
+                foreach ($enumFields as $field => $validValues) {
+                    if (isset($cpKycData[$field])) {
+                        $cpKycData[$field] = strtoupper(trim($cpKycData[$field]));
+                        if (!in_array($cpKycData[$field], $validValues)) {
+                            throw new Exception("Invalid value for $field: " . $cpKycData[$field]);
+                        }
+                    }
+                }
+
+                // Extract tenant_id from userContext if not present in cpKycData
+                if (!isset($cpKycData['tenant_id']) || $cpKycData['tenant_id'] === null) {
+                    $cpKycData['tenant_id'] = $userContext->tenantId;
+                }
+
+                // Ensure correct data types for validation
+                $stringFields = [
+                    'owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'owner2_mobile',
+                    'pincode', 'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num',
+                    'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile',
+                    'key_personnel3_mobile', 'key_personnel4_mobile'
+                ];
+                foreach ($stringFields as $field) {
+                    if (isset($cpKycData[$field]) && !is_string($cpKycData[$field])) {
+                        $cpKycData[$field] = (string) $cpKycData[$field];
+                    }
+                }
+
+                // Validate the cpKyc data using CpKycStoreRequest
+                $request = new CpKycStoreRequest();
+                $request->merge($cpKycData);
+                $request->setUserResolver(function () use ($userContext) {
+                    return $userContext;
+                });
+
+                // Get validation rules
+                $rules = $request->rules();
+
+                // Validate the cpKyc data
+                $validator = Validator::make($request->all(), $rules);
+
+                if ($validator->fails()) {
+                    $errors = $validator->errors()->all();
+                    Log::error('Validation failed for cpKyc at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for cpKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    continue;
+                }
+
+                // Create the cpKyc
+                $this->cpKycRepository->create($cpKycData, $userContext);
+                $importResult['imported_count']++;
+            } catch (Exception $e) {
+                Log::error('Failed to import cpKyc at row ' . ($index + 2) . ': ' . $e->getMessage());
+                $importResult['errors'][] = 'Failed to import cpKyc at row ' . ($index + 2) . ': ' . $e->getMessage();
+            }
+        }
+
+        if (!empty($importResult['errors'])) {
+            $importResult['success'] = false;
+            $importResult['message'] = 'Import completed with errors';
+            Log::error('CpKycs import completed with errors', ['errors' => $importResult['errors']]);
+        } else {
+            Log::debug('CpKycs imported successfully');
+        }
+    } catch (Exception $e) {
+        Log::error('Error importing CpKycs: ' . $e->getMessage());
+        $importResult['success'] = false;
+        $importResult['message'] = 'Import failed: ' . $e->getMessage();
     }
+
+    return $importResult;
+}
+
+
 
     /**
      * Export CpKycs to an Excel file based on the given filters.

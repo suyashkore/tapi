@@ -41,10 +41,10 @@ class TenantStoreRequest extends FormRequest
             'country' => 'nullable|string|max:64',
             'state' => 'nullable|string|max:64',
             'city' => 'nullable|string|max:64',
-            'pincode' => 'required|string|max:16',
+            'pincode' => 'required|integer|digits:6',
+            'latitude' => 'required|numeric|min:-90|max:90',
+            'longitude' => 'required|numeric|min:-180|max:180',
             'address' => 'nullable|string|max:255',
-            'latitude' => 'required|string|max:16',
-            'longitude' => 'required|string|max:16',
             'description' => 'nullable|string|max:255',
             'active' => 'boolean', // default value is true in the database
         ];
