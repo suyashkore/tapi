@@ -250,7 +250,7 @@ class VendorKycService
         }
     }
 
-    /**
+ /**
  * Import VendorKycs from an Excel file.
  *
  * @param \Illuminate\Http\UploadedFile $file
@@ -277,6 +277,7 @@ public function importFromXlsx($file, UserContext $userContext): array
     ];
 
     try {
+        // Check if the file exists and is readable
         if (!file_exists($file) || !is_readable($file)) {
             throw new Exception('The file does not exist or is not readable.');
         }
@@ -301,8 +302,10 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         foreach ($vendorKycs as $index => $vendorKycData) {
             try {
+                // Combine the headers with the data
                 $vendorKycData = array_combine($headers, $vendorKycData);
 
+                // Exclude unnecessary columns
                 foreach ($excludeColumns as $excludeColumn) {
                     unset($vendorKycData[$excludeColumn]);
                 }
@@ -331,7 +334,13 @@ public function importFromXlsx($file, UserContext $userContext): array
                 }
 
                 // Ensure correct data types for validation
-                $stringFields = ['owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'pincode', 'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num', 'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile', 'key_personnel3_mobile', 'key_personnel4_mobile'];
+                $stringFields = [
+                    'owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'pincode',
+                    'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num',
+                    'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile',
+                    'key_personnel3_mobile', 'key_personnel4_mobile'
+                ];
+
                 foreach ($stringFields as $field) {
                     if (isset($vendorKycData[$field]) && !is_string($vendorKycData[$field])) {
                         $vendorKycData[$field] = (string) $vendorKycData[$field];
@@ -383,6 +392,7 @@ public function importFromXlsx($file, UserContext $userContext): array
 
     return $importResult;
 }
+
 
 
     /**

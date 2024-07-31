@@ -115,7 +115,7 @@ class TenantKycService
         Log::info('Uploading file for TenantKyc in TenantKycService', ['id' => $id, 'userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
         $tenantKyc = $this->tenantKycRepository->find($id, $userContext);
 
-        $storage_dir = 'public/files/tms/tenant_'. ($userContext->tenantId ?? 0) .'/tenantkycs/tenantkyc'.$id;
+        $storage_dir = 'public/files/tenantkycs/tenantkyc'.$id;
         $filename_prefix = $urlFieldName;
         if (str_ends_with($filename_prefix, '_url')) {
             $filename_prefix = substr($filename_prefix, 0, -4);
@@ -250,7 +250,7 @@ class TenantKycService
         }
     }
 
-/**
+ /**
  * Import TenantKycs from an Excel file.
  *
  * @param \Illuminate\Http\UploadedFile $file
@@ -277,6 +277,7 @@ public function importFromXlsx($file, UserContext $userContext): array
     ];
 
     try {
+        // Check if the file exists and is readable
         if (!file_exists($file) || !is_readable($file)) {
             throw new Exception('The file does not exist or is not readable.');
         }
@@ -300,41 +301,22 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         foreach ($tenantKycs as $index => $tenantKycData) {
             try {
+                // Combine the headers with the data
                 $tenantKycData = array_combine($headers, $tenantKycData);
 
-                // Normalize enum fields
-                $enumFields = [
-                    'bank1_account_type' => ['CURRENT', 'SAVINGS'],
-                    'bank2_account_type' => ['CURRENT', 'SAVINGS'],
-                    'status' => ['CREATED', 'APPROVED', 'REJECTED', 'PENDING_UPDATE', 'PENDING_APPROVAL']
-                ];
-
-                foreach ($enumFields as $field => $validValues) {
-                    if (isset($tenantKycData[$field])) {
-                        // Normalize values: trim and convert to uppercase
-                        $tenantKycData[$field] = strtoupper(trim($tenantKycData[$field]));
-                        Log::info("Normalized $field value: " . $tenantKycData[$field]); // Add this line for logging
-                        if (!in_array($tenantKycData[$field], $validValues)) {
-                            throw new Exception("Invalid value for $field: " . $tenantKycData[$field]);
-                        }
-                    }
+                // Convert all data to strings
+                foreach ($tenantKycData as $key => $value) {
+                    $tenantKycData[$key] = (string)$value;
                 }
 
-                // Extract tenant_id from userContext if not present in tenantKycData
+                // Extract tenant_id from userContext if not present in data
                 if (!isset($tenantKycData['tenant_id']) || $tenantKycData['tenant_id'] === null) {
                     $tenantKycData['tenant_id'] = $userContext->tenantId;
                 }
 
-                // Ensure correct data types for validation
-                $stringFields = ['owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'pincode', 'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num', 'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile', 'key_personnel3_mobile', 'key_personnel4_mobile'];
-                foreach ($stringFields as $field) {
-                    if (isset($tenantKycData[$field]) && !is_string($tenantKycData[$field])) {
-                        $tenantKycData[$field] = (string) $tenantKycData[$field];
-                    }
-                }
-
-                // Validate the tenantKyc data using TenantKycStoreRequest
+                // Validate the data using the appropriate StoreRequest
                 $request = new TenantKycStoreRequest();
+                // Manually set the data and user context on the request
                 $request->merge($tenantKycData);
                 $request->setUserResolver(function () use ($userContext) {
                     return $userContext;
@@ -343,18 +325,18 @@ public function importFromXlsx($file, UserContext $userContext): array
                 // Get validation rules
                 $rules = $request->rules();
 
-                // Validate the tenantKyc data
+                // Validate the data
                 $validator = Validator::make($request->all(), $rules);
 
                 if ($validator->fails()) {
                     // Collect validation errors
                     $errors = $validator->errors()->all();
-                    Log::error('Validation failed for tenantKyc at row ' . ($index + 2) . ': ', $errors);
-                    $importResult['errors'][] = 'Validation failed for tenantKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    Log::error('Validation failed for TenantKyc at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for TenantKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
                     continue;
                 }
 
-                // Create the tenantKyc
+                // Create the entity
                 $this->tenantKycRepository->create($tenantKycData, $userContext);
                 $importResult['imported_count']++;
             } catch (Exception $e) {

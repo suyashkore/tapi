@@ -100,6 +100,7 @@ class CpKycService
         return null;
     }
 
+    //TODO: Remove below method if not required.
     /**
     * Upload an image or file for the CpKyc and update the URL in the database: U
     *
@@ -152,6 +153,7 @@ class CpKycService
         return $cpKyc->$urlFieldName;
     }
 
+    //TODO: Remove below method if not required.
     /**
      * Deactivate a CpKyc by setting its active field to false: U
      *
@@ -277,6 +279,7 @@ public function importFromXlsx($file, UserContext $userContext): array
     ];
 
     try {
+        // Check if the file exists and is readable
         if (!file_exists($file) || !is_readable($file)) {
             throw new Exception('The file does not exist or is not readable.');
         }
@@ -300,44 +303,22 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         foreach ($cpKycs as $index => $cpKycData) {
             try {
+                // Combine the headers with the data
                 $cpKycData = array_combine($headers, $cpKycData);
 
-                // Normalize enum fields
-                $enumFields = [
-                    'bank1_account_type' => ['CURRENT', 'SAVINGS'],
-                    'bank2_account_type' => ['CURRENT', 'SAVINGS'],
-                    // Add other enum fields if any
-                ];
-
-                foreach ($enumFields as $field => $validValues) {
-                    if (isset($cpKycData[$field])) {
-                        $cpKycData[$field] = strtoupper(trim($cpKycData[$field]));
-                        if (!in_array($cpKycData[$field], $validValues)) {
-                            throw new Exception("Invalid value for $field: " . $cpKycData[$field]);
-                        }
-                    }
+                // Convert all data to strings
+                foreach ($cpKycData as $key => $value) {
+                    $cpKycData[$key] = (string)$value;
                 }
 
-                // Extract tenant_id from userContext if not present in cpKycData
+                // Extract tenant_id from userContext if not present in data
                 if (!isset($cpKycData['tenant_id']) || $cpKycData['tenant_id'] === null) {
                     $cpKycData['tenant_id'] = $userContext->tenantId;
                 }
 
-                // Ensure correct data types for validation
-                $stringFields = [
-                    'owner1_aadhaar', 'owner1_mobile', 'owner2_aadhaar', 'owner2_mobile',
-                    'pincode', 'latitude', 'longitude', 'aadhaar_num', 'bank1_account_num',
-                    'bank2_account_num', 'key_personnel1_mobile', 'key_personnel2_mobile',
-                    'key_personnel3_mobile', 'key_personnel4_mobile'
-                ];
-                foreach ($stringFields as $field) {
-                    if (isset($cpKycData[$field]) && !is_string($cpKycData[$field])) {
-                        $cpKycData[$field] = (string) $cpKycData[$field];
-                    }
-                }
-
-                // Validate the cpKyc data using CpKycStoreRequest
+                // Validate the data using the appropriate StoreRequest
                 $request = new CpKycStoreRequest();
+                // Manually set the data and user context on the request
                 $request->merge($cpKycData);
                 $request->setUserResolver(function () use ($userContext) {
                     return $userContext;
@@ -346,18 +327,18 @@ public function importFromXlsx($file, UserContext $userContext): array
                 // Get validation rules
                 $rules = $request->rules();
 
-                // Validate the cpKyc data
+                // Validate the data
                 $validator = Validator::make($request->all(), $rules);
 
                 if ($validator->fails()) {
+                    // Collect validation errors
                     $errors = $validator->errors()->all();
-                    Log::error('Validation failed for cpKyc at row ' . ($index + 2) . ': ', $errors);
-                    $importResult['errors'][] = 'Validation failed for cpKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
+                    Log::error('Validation failed for CpKyc at row ' . ($index + 2) . ': ', $errors);
+                    $importResult['errors'][] = 'Validation failed for CpKyc at row ' . ($index + 2) . ': ' . implode(', ', $errors);
                     continue;
                 }
 
-                // Create the cpKyc
-                $this->cpKycRepository->create($cpKycData, $userContext);
+                // Create the entity
                 $importResult['imported_count']++;
             } catch (Exception $e) {
                 Log::error('Failed to import cpKyc at row ' . ($index + 2) . ': ' . $e->getMessage());
