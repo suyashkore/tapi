@@ -60,7 +60,7 @@ class CreateCustContractSlabRatesTable extends Migration
 
             // Indexes for faster queries
             $table->index(['tenant_id', 'cust_contract_id']);
-            $table->unique(['cust_contract_id', 'from_place_id', 'to_place_id']);
+            $table->unique(['cust_contract_id', 'from_place_id', 'to_place_id'], 'unique_contract_place');
         });
     }
 
@@ -82,7 +82,7 @@ class CreateCustContractSlabRatesTable extends Migration
 
             // Drop indexes
             $table->dropIndex(['tenant_id', 'cust_contract_id']);
-            $table->dropUnique(['cust_contract_id', 'from_place_id', 'to_place_id']);
+            $table->dropUnique('unique_contract_place');
         });
 
         // Drop the table
