@@ -4,6 +4,7 @@ namespace App\Feature\User\Controllers;
 
 use App\Feature\User\Requests\AdminResetPasswordRequest;
 use App\Feature\User\Requests\ChangePasswordRequest;
+use App\Feature\User\Requests\GenOtpRequest;
 use App\Feature\User\Requests\UserStoreRequest;
 use App\Feature\User\Requests\UserUpdateRequest;
 use App\Feature\Shared\Requests\UploadImgOrFileRequest;
@@ -405,6 +406,26 @@ class UserController extends Controller
             $this->userService->changeUserPassword($data['old_password'], $data['new_password'], $userContext);
 
             return response()->json(['message' => 'Password changed successfully'], 200);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
+    }
+
+    /**
+     * Generate OTP for a user.
+     *
+     * @param GenOtpRequest $request
+     * @return JsonResponse
+     */
+    public function generateOtp(GenOtpRequest $request): JsonResponse
+    {
+        Log::info('User requested OTP generation for login ID: ' . $request->login_id);
+
+        try {
+            $data = $request->validated();
+            $this->userService->generateOtp($data['tenant_id'], $data['login_id']);
+
+            return response()->json(['message' => 'OTP generated successfully'], 200);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         }

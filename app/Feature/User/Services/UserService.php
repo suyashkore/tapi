@@ -6,6 +6,7 @@ use App\Feature\Shared\Helpers\ImgOrFileUploadHelper;
 use App\Feature\User\Models\User;
 use App\Feature\User\Repositories\UserRepository;
 use App\Feature\User\Requests\UserStoreRequest;
+use App\Feature\User\Services\UserOtpService;
 use Illuminate\Support\Facades\Validator;
 use App\Feature\Shared\Models\UserContext;
 use Illuminate\Support\Facades\Log;
@@ -33,13 +34,22 @@ class UserService
     protected $userRepository;
 
     /**
+     * The service instance for handling OTP-related operations.
+     *
+     * @var UserOtpService
+     */
+    protected $userOtpService;
+
+    /**
      * UserService constructor.
      *
      * @param UserRepository $userRepository
+     * @param UserOtpService $userOtpService
      */
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, UserOtpService $userOtpService)
     {
         $this->userRepository = $userRepository;
+        $this->userOtpService = $userOtpService;
     }
 
     /**
@@ -495,5 +505,20 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         // Update the user's password
         $this->userRepository->updateUserPassword($userContext->tenantId, $userContext->loginId, $hashedPassword, $userContext);
+    }
+
+    /**
+    * Generate OTP for a user.
+    *
+    * @param int $tenantId
+    * @param string $loginId
+    * @return void
+    */
+    public function generateOtp(int $tenantId, string $loginId): void
+    {
+        Log::info("Generating OTP in UserService for user login ID: $loginId in tenant ID: $tenantId");
+
+        // Call the UserOtpService to generate the OTP
+        $this->userOtpService->createOtp($tenantId, $loginId);
     }
 }

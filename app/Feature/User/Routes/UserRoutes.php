@@ -50,3 +50,9 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     Route::put('/change/selfpassword', [UserController::class, 'changeSelfPassword'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
 });
+
+// Routes that do not require authentication
+Route::group([], function () {
+    // Route to generate OTP
+    Route::post('/gen/otp', [UserController::class, 'generateOtp']);
+});

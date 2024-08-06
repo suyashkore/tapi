@@ -67,6 +67,7 @@ class UserOtp extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'tenant_id',
         'login_id',
         'otp_hash',
@@ -83,6 +84,8 @@ class UserOtp extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'user_id' => 'integer',
+        'tenant_id' => 'integer',
         'expires_at' => 'datetime',
         'otp_login_blocked_till' => 'datetime',
         'failed_otp_login_attempts' => 'integer',
