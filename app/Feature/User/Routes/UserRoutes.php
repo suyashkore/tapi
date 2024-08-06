@@ -46,4 +46,7 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
     // Route to reset password by admin user
     Route::put('/admin/resetpassword', [UserController::class, 'adminResetPassword'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
 
+    // Route to change self password while logged in
+    Route::put('/change/selfpassword', [UserController::class, 'changeSelfPassword'])->middleware('checkPrivileges:SYS_ALL,TENANT_ALL');
+
 });

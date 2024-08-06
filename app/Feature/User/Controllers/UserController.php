@@ -3,6 +3,7 @@
 namespace App\Feature\User\Controllers;
 
 use App\Feature\User\Requests\AdminResetPasswordRequest;
+use App\Feature\User\Requests\ChangePasswordRequest;
 use App\Feature\User\Requests\UserStoreRequest;
 use App\Feature\User\Requests\UserUpdateRequest;
 use App\Feature\Shared\Requests\UploadImgOrFileRequest;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -383,6 +385,29 @@ class UserController extends Controller
         $this->userService->resetUserPassword($data['tenant_id'], $data['login_id'], $data['new_password'], $userContext);
 
         return response()->json(['message' => 'Password reset successfully'], 200);
+    }
+
+    /**
+     * Change password for a logged-in user.
+     *
+     * @param ChangePasswordRequest $request
+     * @return JsonResponse
+     */
+    public function changeSelfPassword(ChangePasswordRequest $request): JsonResponse
+    {
+        Log::info('User requested password change for user ID: ' . $request->user()->id);
+
+        try {
+            // Extract user context from request
+            $userContext = $request->attributes->get('userContext');
+
+            $data = $request->validated();
+            $this->userService->changeUserPassword($data['old_password'], $data['new_password'], $userContext);
+
+            return response()->json(['message' => 'Password changed successfully'], 200);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
     }
 
 }

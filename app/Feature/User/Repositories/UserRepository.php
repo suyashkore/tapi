@@ -323,6 +323,7 @@ class UserRepository
      * @param int $tenantId
      * @param string $loginId
      * @param string $hashedPassword
+     * @param UserContext $userContext
      * @return void
      */
     public function updateUserPassword(int $tenantId, string $loginId, string $hashedPassword, UserContext $userContext): void

@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Class ChangePasswordRequest
  *
- * Handles validation for resetting a user's password using the old password.
+ * Handles validation for resetting self user's password using the old password, while logged in.
  *
  * @package App\Feature\User\Requests
  */
@@ -27,23 +27,6 @@ class ChangePasswordRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation()
-    {
-        // Extract user context from request attributes
-        $userContext = $this->attributes->get('userContext');
-
-        // Merge tenant_id and user_id from userContext into the request data
-        if ($userContext) {
-            $this->merge([
-                'tenant_id' => $userContext->tenantId,
-                'user_id' => $userContext->userId,
-            ]);
-        }
-    }
-
-    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -53,8 +36,6 @@ class ChangePasswordRequest extends FormRequest
         Log::debug('Validating reset password request data in ResetPasswordRequest');
 
         return [
-            'tenant_id' => 'required|exists:tenants,id',
-            'user_id' => 'required|exists:users,id',
             'old_password' => 'required|string|min:8',
             'new_password' => 'required|string|min:8|confirmed',
         ];

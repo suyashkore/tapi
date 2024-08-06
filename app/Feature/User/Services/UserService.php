@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Exception;
 
 /**
@@ -453,6 +454,7 @@ public function importFromXlsx($file, UserContext $userContext): array
      * @param int $tenantId
      * @param string $loginId
      * @param string $newPassword
+     * @param UserContext $userContext
      * @return void
      */
     public function resetUserPassword(int $tenantId, string $loginId, string $newPassword, UserContext $userContext): void
@@ -461,5 +463,37 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         $hashedPassword = Hash::make($newPassword);
         $this->userRepository->updateUserPassword($tenantId, $loginId, $hashedPassword, $userContext);
+    }
+
+    /**
+     * Change the password of a logged-in user.
+     *
+     * @param string $oldPassword
+     * @param string $newPassword
+     * @param UserContext $userContext
+     * @return void
+     * @throws ValidationException
+     */
+    public function changeUserPassword(string $oldPassword, string $newPassword, UserContext $userContext): void
+    {
+        Log::info("Changing password for user ID: {$userContext->userId} in tenant ID: {$userContext->tenantId}", ['userContext' => $userContext]);
+
+        $user = $this->userRepository->find($userContext->userId, $userContext);
+
+        // Check if the old password matches
+        if (!Hash::check($oldPassword, $user->password_hash)) {
+            Log::error('Invalid old password provided for password change', ['userId' => $userContext->userId]);
+
+            $validator = Validator::make([], []);
+            $validator->errors()->add('old_password', 'Invalid old password provided');
+
+            throw new ValidationException($validator);
+        }
+
+        // Hash the new password
+        $hashedPassword = Hash::make($newPassword);
+
+        // Update the user's password
+        $this->userRepository->updateUserPassword($userContext->tenantId, $userContext->loginId, $hashedPassword, $userContext);
     }
 }
