@@ -54,7 +54,8 @@ class CustContractUpdateRequest extends FormRequest
         $contractId = $this->route('id'); // Get the contract ID from the route parameter
 
         return [
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
+            'company_tag' => 'nullable|exists:companies,id',
             'ctr_num' => [
                 'sometimes',
                 'string',

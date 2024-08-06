@@ -53,7 +53,7 @@ class CustContractSlabDefinitionUpdateRequest extends FormRequest
         $custContractSlabDefinitionId = $this->route('id'); // Get the slab definition ID from the route parameter
 
         return [
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
             'cust_contract_id' => 'required|exists:cust_contracts,id',
             'ctr_num' => 'required|string|max:24',
             'slab_distance_type' => 'required|json',

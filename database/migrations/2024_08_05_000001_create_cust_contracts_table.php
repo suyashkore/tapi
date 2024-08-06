@@ -19,8 +19,12 @@ class CreateCustContractsTable extends Migration
             $table->unsignedBigInteger('id')->autoIncrement();
 
             // Foreign key from tenants table
-            $table->unsignedSmallInteger('tenant_id');
+            $table->unsignedSmallInteger('tenant_id')->nullable();
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+
+            // Foreign key from companies table
+            $table->unsignedSmallInteger('company_tag')->nullable();
+            $table->foreign('company_tag')->references('id')->on('companies')->onDelete('set null');
 
             // Unique contract number within a tenant
             $table->string('ctr_num', 24);
@@ -84,6 +88,7 @@ class CreateCustContractsTable extends Migration
         Schema::table('cust_contracts', function (Blueprint $table) {
             // Drop foreign key constraints
             $table->dropForeign(['tenant_id']);
+            $table->dropForeign(['company_tag']);
             $table->dropForeign(['customer_group_id']);
             $table->dropForeign(['customer_id']);
             $table->dropForeign(['created_by']);

@@ -52,7 +52,8 @@ class CustContractStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
+            'company_tag' => 'nullable|exists:companies,id',
             'ctr_num' => [
                 'required',
                 'string',

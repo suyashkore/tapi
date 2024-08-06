@@ -54,7 +54,7 @@ class CustContractOdaChargesUpdateRequest extends FormRequest
         $custContractOdaChargeId = $this->route('id'); // Get the ODA charge ID from the route parameter
 
         return [
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
             'cust_contract_id' => 'required|exists:cust_contracts,id',
             'ctr_num' => 'required|string|max:24',
             'from_place_id' => 'nullable|exists:station_coverage,id',

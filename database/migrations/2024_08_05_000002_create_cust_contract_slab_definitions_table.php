@@ -18,7 +18,7 @@ class CreateCustContractSlabDefinitionsTable extends Migration
             $table->unsignedBigInteger('id')->autoIncrement();
 
             // Foreign key from tenants table, mandatory
-            $table->unsignedSmallInteger('tenant_id');
+            $table->unsignedSmallInteger('tenant_id')->nullable();
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
 
             // Foreign key from cust_contracts table, mandatory

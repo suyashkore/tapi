@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use App\Feature\Tenant\Models\Tenant;
+use App\Feature\Company\Models\Company;
 use App\Feature\Customer\Models\Customer;
 use App\Feature\User\Models\User;
 use App\Feature\Contract\Models\CustContractSlabDefinition;
@@ -20,6 +21,7 @@ use App\Feature\Contract\Models\CustContractOdaCharges;
  * @package App\Feature\Contract\Models
  * @property int $id
  * @property int $tenant_id
+ * @property int|null $company_tag
  * @property string $ctr_num
  * @property int|null $customer_group_id
  * @property int $customer_id
@@ -90,6 +92,7 @@ class CustContract extends Model
      */
     protected $fillable = [
         'tenant_id',
+        'company_tag',
         'ctr_num',
         'customer_group_id',
         'customer_id',
@@ -121,6 +124,7 @@ class CustContract extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'company_tag' => 'integer',
         'payment_type' => 'array',
         'load_type' => 'array',
         'distance_type' => 'array',
@@ -149,6 +153,16 @@ class CustContract extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    /**
+     * Get the company associated with this.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'company_tag');
     }
 
     /**

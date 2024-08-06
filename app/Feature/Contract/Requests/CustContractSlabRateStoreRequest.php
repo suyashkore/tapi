@@ -52,7 +52,7 @@ class CustContractSlabRateStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'tenant_id' => 'required|exists:tenants,id',
+            'tenant_id' => 'nullable|exists:tenants,id',
             'cust_contract_id' => 'required|exists:cust_contracts,id',
             'ctr_num' => 'required|string|max:24',
             'zone' => 'nullable|string|max:16',
