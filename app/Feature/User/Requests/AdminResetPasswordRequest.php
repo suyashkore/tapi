@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class AdminResetPasswordRequest
@@ -55,9 +56,33 @@ class AdminResetPasswordRequest extends FormRequest
 
         return [
             'tenant_id' => 'required|exists:tenants,id',
-            'user_id' => 'required|exists:users,id',
+            'login_id' => ['required', 'exists:users,login_id'],
             'new_password' => 'required|string|min:8|confirmed',
         ];
+    }
+
+    /**
+     * Configure the validator instance.
+     *
+     * @param Validator $validator
+     * @return void
+     */
+    protected function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $tenantId = $this->input('tenant_id');
+            $loginId = $this->input('login_id');
+
+            // Check if the combination of tenant_id and login_id exists
+            $exists = DB::table('users')
+                ->where('tenant_id', $tenantId)
+                ->where('login_id', $loginId)
+                ->exists();
+
+            if (!$exists) {
+                $validator->errors()->add('login_id', 'The specified tenant_id and login_id combination does not exist.');
+            }
+        });
     }
 
     /**

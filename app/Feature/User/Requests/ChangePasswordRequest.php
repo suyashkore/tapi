@@ -8,13 +8,13 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Class ResetPasswordRequest
+ * Class ChangePasswordRequest
  *
  * Handles validation for resetting a user's password using the old password.
  *
  * @package App\Feature\User\Requests
  */
-class ResetPasswordRequest extends FormRequest
+class ChangePasswordRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

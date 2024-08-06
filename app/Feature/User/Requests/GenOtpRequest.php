@@ -8,13 +8,13 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Class ResetPasswordWithOtpRequest
+ * Class GenOtpRequest
  *
- * Handles validation for resetting a user's password using an OTP.
+ * Handles validation for Generating OTP.
  *
  * @package App\Feature\User\Requests
  */
-class ResetPasswordWithOtpRequest extends FormRequest
+class GenOtpRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -33,13 +33,11 @@ class ResetPasswordWithOtpRequest extends FormRequest
      */
     public function rules()
     {
-        Log::debug('Validating reset password request data in ResetPasswordWithOtpRequest');
+        Log::debug('Validating generate otp request data in GenOtpRequest');
 
         return [
-            'tenant_id' => 'required|exists:users,tenant_id',
-            'login_id' => 'required|exists:users,login_id',
-            'otp' => 'required|string|min:6|max:6', // Assuming OTP is a 6-digit code
-            'new_password' => 'required|string|min:8|confirmed',
+            'tenant_id' => 'required|exists:tenants,id',
+            'login_id' => 'required|exists:users,id'
         ];
     }
 

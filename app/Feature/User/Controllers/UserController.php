@@ -366,7 +366,7 @@ class UserController extends Controller
         }
     }
 
-    /**
+   /**
      * Admin reset password for a user.
      *
      * @param AdminResetPasswordRequest $request
@@ -374,10 +374,13 @@ class UserController extends Controller
      */
     public function adminResetPassword(AdminResetPasswordRequest $request): JsonResponse
     {
-        Log::info('Admin requested password reset for user ID: ' . $request->user_id);
+        Log::info('Admin requested password reset in UserController for user login ID: ' . $request->login_id . ' tenant id: ' . $request->tenant_id);
+
+        // Extract user context from request
+        $userContext = $request->attributes->get('userContext');
 
         $data = $request->validated();
-        $this->userService->resetUserPassword($data['tenant_id'], $data['user_id'], $data['new_password']);
+        $this->userService->resetUserPassword($data['tenant_id'], $data['login_id'], $data['new_password'], $userContext);
 
         return response()->json(['message' => 'Password reset successfully'], 200);
     }

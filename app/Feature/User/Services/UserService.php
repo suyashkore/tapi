@@ -451,15 +451,15 @@ public function importFromXlsx($file, UserContext $userContext): array
      * Reset the password of a user.
      *
      * @param int $tenantId
-     * @param int $userId
+     * @param string $loginId
      * @param string $newPassword
      * @return void
      */
-    public function resetUserPassword(int $tenantId, int $userId, string $newPassword): void
+    public function resetUserPassword(int $tenantId, string $loginId, string $newPassword, UserContext $userContext): void
     {
-        Log::info("Resetting password for user ID: $userId in tenant ID: $tenantId");
+        Log::info("Resetting password in UserService for user login ID: $loginId in tenant ID: $tenantId", ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
 
         $hashedPassword = Hash::make($newPassword);
-        $this->userRepository->updateUserPassword($tenantId, $userId, $hashedPassword);
+        $this->userRepository->updateUserPassword($tenantId, $loginId, $hashedPassword, $userContext);
     }
 }

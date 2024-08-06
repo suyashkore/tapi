@@ -321,16 +321,22 @@ class UserRepository
      * Update the password of a user.
      *
      * @param int $tenantId
-     * @param int $userId
+     * @param string $loginId
      * @param string $hashedPassword
      * @return void
      */
-    public function updateUserPassword(int $tenantId, int $userId, string $hashedPassword): void
+    public function updateUserPassword(int $tenantId, string $loginId, string $hashedPassword, UserContext $userContext): void
     {
-        Log::info("Updating password for user ID: $userId in tenant ID: $tenantId");
-
+        Log::debug("Updating password in UserRepository for user login ID: $loginId in tenant ID: $tenantId", ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        // Check if the User belongs to the tenant_id in the user context
+        if ($userContext->tenantId !== null && Schema::hasColumn(self::tableName(), 'tenant_id')) {
+            if ($tenantId !== $userContext->tenantId) {
+                Log::error('Unauthorized password reset attempt', ['tenantId' => $tenantId, 'userContext->tenantId' => $userContext->tenantId]);
+                throw new \Exception('Unauthorized password reset attempt');
+            }
+        }
         User::where('tenant_id', $tenantId)
-            ->where('id', $userId)
+            ->where('login_id', $loginId)
             ->update(['password_hash' => $hashedPassword]);
     }
 }
