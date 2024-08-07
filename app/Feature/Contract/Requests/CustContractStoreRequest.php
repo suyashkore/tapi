@@ -42,7 +42,30 @@ class CustContractStoreRequest extends FormRequest
             // Log an error or throw an exception if tenant_id cannot be determined
             Log::error('Tenant ID missing or invalid in userContext', ['userContext' => $userContext]);
         }
+        // Convert date fields to the required format
+        if ($this->has('start_date')) {
+            $this->merge([
+                'start_date' => $this->formatDate($this->input('start_date')),
+            ]);
+        }
+        if ($this->has('end_date')) {
+            $this->merge([
+                'end_date' => $this->formatDate($this->input('end_date')),
+            ]);
+        }
     }
+    
+    /**
+     * Format the date to Y-m-d H:i:s.
+     *
+     * @param string $date
+     * @return string
+     */
+    private function formatDate($date)
+    {
+        return \Carbon\Carbon::parse($date)->format('Y-m-d H:i:s');
+    }
+    
 
     /**
      * Get the validation rules that apply to the request.

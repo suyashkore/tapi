@@ -45,6 +45,7 @@ Route::middleware('api')->group(function () {
         Route::group(['prefix' => 'contracts'], function () {
             require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
             require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
+            require base_path('app/Feature/Contract/Routes/CustContractRoutes.php');
         });
 
         //Include Customer routes
