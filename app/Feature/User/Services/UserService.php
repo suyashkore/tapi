@@ -486,13 +486,13 @@ public function importFromXlsx($file, UserContext $userContext): array
      */
     public function changeUserPassword(string $oldPassword, string $newPassword, UserContext $userContext): void
     {
-        Log::info("Changing password for user ID: {$userContext->userId} in tenant ID: {$userContext->tenantId}", ['userContext' => $userContext]);
+        Log::info("Changing password in UserService for user ID: {$userContext->userId} in tenant ID: {$userContext->tenantId}", ['userContext' => $userContext]);
 
         $user = $this->userRepository->find($userContext->userId, $userContext);
 
         // Check if the old password matches
         if (!Hash::check($oldPassword, $user->password_hash)) {
-            Log::error('Invalid old password provided for password change', ['userId' => $userContext->userId]);
+            Log::error('Invalid old password provided for password change in UserService', ['userId' => $userContext->userId]);
 
             $validator = Validator::make([], []);
             $validator->errors()->add('old_password', 'Invalid old password provided');

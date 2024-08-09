@@ -396,7 +396,7 @@ class UserController extends Controller
      */
     public function changeSelfPassword(ChangePasswordRequest $request): JsonResponse
     {
-        Log::info('User requested password change for user ID: ' . $request->user()->id);
+        Log::info('User requested password change in UserController for user ID: ' . $request->user()->id);
 
         try {
             // Extract user context from request
@@ -419,7 +419,7 @@ class UserController extends Controller
      */
     public function generateOtp(GenOtpRequest $request): JsonResponse
     {
-        Log::info('User requested OTP generation for login ID: ' . $request->login_id);
+        Log::info('User requested OTP generation in UserController for login ID: ' . $request->login_id);
 
         try {
             $data = $request->validated();

@@ -332,8 +332,8 @@ class UserRepository
         // Check if the User belongs to the tenant_id in the user context
         if ($userContext->tenantId !== null && Schema::hasColumn(self::tableName(), 'tenant_id')) {
             if ($tenantId !== $userContext->tenantId) {
-                Log::error('Unauthorized password reset attempt', ['tenantId' => $tenantId, 'userContext->tenantId' => $userContext->tenantId]);
-                throw new \Exception('Unauthorized password reset attempt');
+                Log::error('Unauthorized password reset attempt in UserRepository', ['tenantId' => $tenantId, 'userContext->tenantId' => $userContext->tenantId]);
+                throw new \Exception('Unauthorized password reset attempt in UserRepository');
             }
         }
         User::where('tenant_id', $tenantId)
