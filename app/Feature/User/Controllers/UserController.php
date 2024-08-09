@@ -5,6 +5,7 @@ namespace App\Feature\User\Controllers;
 use App\Feature\User\Requests\AdminResetPasswordRequest;
 use App\Feature\User\Requests\ChangePasswordRequest;
 use App\Feature\User\Requests\GenOtpRequest;
+use App\Feature\User\Requests\ResetPasswordWithOtpRequest;
 use App\Feature\User\Requests\UserStoreRequest;
 use App\Feature\User\Requests\UserUpdateRequest;
 use App\Feature\Shared\Requests\UploadImgOrFileRequest;
@@ -419,7 +420,7 @@ class UserController extends Controller
      */
     public function generateOtp(GenOtpRequest $request): JsonResponse
     {
-        Log::info('User requested OTP generation in UserController for login ID: ' . $request->login_id);
+        Log::info('User requested OTP generation in UserController for login ID: ' . $request->login_id. ' tenant id: ' . $request->tenant_id);
 
         try {
             $data = $request->validated();
@@ -428,6 +429,34 @@ class UserController extends Controller
             return response()->json(['message' => 'OTP generated successfully'], 200);
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
+        }
+    }
+
+       /**
+     * Change password using OTP while logged out.
+     *
+     * @param ResetPasswordWithOtpRequest $request
+     * @return JsonResponse
+     */
+    public function changePasswordWithOtp(ResetPasswordWithOtpRequest $request): JsonResponse
+    {
+        Log::info('User requested password change using OTP in UserController for login ID: ' . $request->input('login_id'). ' tenant id: ' . $request->tenant_id);
+
+        try {
+            $data = $request->validated();
+            $this->userService->changePasswordWithOtp(
+                $data['tenant_id'],
+                $data['login_id'],
+                $data['otp'],
+                $data['new_password']
+            );
+
+            return response()->json(['message' => 'Password changed successfully'], 200);
+        } catch (ValidationException $e) {
+            return response()->json(['error' => 'OTP verification failed in UserController'], 400);
+        } catch (\Exception $e) {
+            Log::error('Error occurred while changing password using OTP in UserController', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to change password'], 500);
         }
     }
 

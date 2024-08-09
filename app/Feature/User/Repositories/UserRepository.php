@@ -318,26 +318,68 @@ class UserRepository
     }
 
     /**
-     * Update the password of a user.
+     * Shared method to update the user's password.
+     *
+     * @param int $tenantId
+     * @param string $loginId
+     * @param string $hashedPassword
+     * @return void
+     */
+    private function updatePassword(int $tenantId, string $loginId, string $hashedPassword): void
+    {
+        User::where('tenant_id', $tenantId)
+            ->where('login_id', $loginId)
+            ->update(['password_hash' => $hashedPassword]);
+    }
+
+
+    /**
+     * Update the password of a user with UserContext.
      *
      * @param int $tenantId
      * @param string $loginId
      * @param string $hashedPassword
      * @param UserContext $userContext
      * @return void
+     * @throws \Exception
      */
-    public function updateUserPassword(int $tenantId, string $loginId, string $hashedPassword, UserContext $userContext): void
+    public function updateUserPasswordWithContext(int $tenantId, string $loginId, string $hashedPassword, UserContext $userContext): void
     {
-        Log::debug("Updating password in UserRepository for user login ID: $loginId in tenant ID: $tenantId", ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
+        Log::debug("Updating password in UserRepository for user login ID: $loginId in tenant ID: $tenantId", [
+            'userContext' => [
+                'userId' => $userContext->userId,
+                'tenantId' => $userContext->tenantId,
+                'loginId' => $userContext->loginId
+            ]
+        ]);
+
         // Check if the User belongs to the tenant_id in the user context
         if ($userContext->tenantId !== null && Schema::hasColumn(self::tableName(), 'tenant_id')) {
             if ($tenantId !== $userContext->tenantId) {
-                Log::error('Unauthorized password reset attempt in UserRepository', ['tenantId' => $tenantId, 'userContext->tenantId' => $userContext->tenantId]);
+                Log::error('Unauthorized password reset attempt in UserRepository', [
+                    'tenantId' => $tenantId,
+                    'userContext->tenantId' => $userContext->tenantId
+                ]);
                 throw new \Exception('Unauthorized password reset attempt in UserRepository');
             }
         }
-        User::where('tenant_id', $tenantId)
-            ->where('login_id', $loginId)
-            ->update(['password_hash' => $hashedPassword]);
+
+        $this->updatePassword($tenantId, $loginId, $hashedPassword);
     }
+
+    /**
+     * Update the password of a user without UserContext.
+     *
+     * @param int $tenantId
+     * @param string $loginId
+     * @param string $hashedPassword
+     * @return void
+     */
+    public function updateUserPasswordWithoutContext(int $tenantId, string $loginId, string $hashedPassword): void
+    {
+        Log::debug("Updating password in UserRepository for user login ID: $loginId in tenant ID: $tenantId");
+
+        $this->updatePassword($tenantId, $loginId, $hashedPassword);
+    }
+
 }

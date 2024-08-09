@@ -472,7 +472,7 @@ public function importFromXlsx($file, UserContext $userContext): array
         Log::info("Resetting password in UserService for user login ID: $loginId in tenant ID: $tenantId", ['userContext' => ['userId' => $userContext->userId, 'tenantId' => $userContext->tenantId, 'loginId' => $userContext->loginId]]);
 
         $hashedPassword = Hash::make($newPassword);
-        $this->userRepository->updateUserPassword($tenantId, $loginId, $hashedPassword, $userContext);
+        $this->userRepository->updateUserPasswordWithContext($tenantId, $loginId, $hashedPassword, $userContext);
     }
 
     /**
@@ -504,7 +504,7 @@ public function importFromXlsx($file, UserContext $userContext): array
         $hashedPassword = Hash::make($newPassword);
 
         // Update the user's password
-        $this->userRepository->updateUserPassword($userContext->tenantId, $userContext->loginId, $hashedPassword, $userContext);
+        $this->userRepository->updateUserPasswordWithContext($userContext->tenantId, $userContext->loginId, $hashedPassword, $userContext);
     }
 
     /**
@@ -520,5 +520,32 @@ public function importFromXlsx($file, UserContext $userContext): array
 
         // Call the UserOtpService to generate the OTP
         $this->userOtpService->createOtp($tenantId, $loginId);
+    }
+
+    /**
+     * Change password using OTP.
+     *
+     * @param int $tenantId
+     * @param string $loginId
+     * @param string $otp
+     * @param string $newPassword
+     * @return void
+     * @throws ValidationException
+     */
+    public function changePasswordWithOtp(int $tenantId, string $loginId, string $otp, string $newPassword): void
+    {
+        Log::info("Changing password using OTP for login ID in UserService: $loginId in tenant ID: $tenantId");
+
+        // Verify the OTP
+        if (!$this->userOtpService->verifyOtp($tenantId, $loginId, $otp)) {
+            Log::error("Invalid OTP provided in UserService for login ID: $loginId in tenant ID: $tenantId");
+            throw new ValidationException(response()->json(['error' => 'Invalid OTP'], 400));
+        }
+
+        // Hash the new password
+        $hashedPassword = Hash::make($newPassword);
+
+        // Update the user's password
+        $this->userRepository->updateUserPasswordWithoutContext($tenantId, $loginId, $hashedPassword);
     }
 }

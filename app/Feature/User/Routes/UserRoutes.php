@@ -55,4 +55,7 @@ Route::middleware(['jwt.auth', 'setUserContext'])->group(function () {
 Route::group([], function () {
     // Route to generate OTP
     Route::post('/gen/otp', [UserController::class, 'generateOtp']);
+
+    // Route to change password using OTP while logged out
+    Route::put('/change/password/withotp', [UserController::class, 'changePasswordWithOtp']);
 });
