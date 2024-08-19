@@ -46,6 +46,10 @@ Route::middleware('api')->group(function () {
             require base_path('app/Feature/Contract/Routes/LoaderRateRoutes.php');
             require base_path('app/Feature/Contract/Routes/DriverRateRoutes.php');
             require base_path('app/Feature/Contract/Routes/CustContractRoutes.php');
+            require base_path('app/Feature/Contract/Routes/CustContractExcessWeightRateRoutes.php');
+            require base_path('app/Feature/Contract/Routes/CustContractOdaChargesRoutes.php');
+            require base_path('app/Feature/Contract/Routes/CustContractSlabDefinitionRoutes.php');
+            require base_path('app/Feature/Contract/Routes/CustContractSlabRateRoutes.php');
         });
 
         //Include Customer routes
