@@ -107,7 +107,7 @@ class TenantController extends Controller
         $userContext = $request->attributes->get('userContext');
 
         // Extract filters, sorting, and pagination parameters from request
-        $filters = $request->only(['active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
+        $filters = $request->only(['name', 'country', 'state', 'city', 'pincode', 'active', 'created_from', 'created_to', 'updated_from', 'updated_to']);
         $sortBy = $request->get('sort_by', 'updated_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $perPage = $request->get('per_page', 10);
