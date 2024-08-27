@@ -38,14 +38,14 @@ class TenantUpdateRequest extends FormRequest
 
         return [
             'name' => 'sometimes|string|max:128',
-            'country' => 'sometimes|string|max:64',
-            'state' => 'sometimes|string|max:64',
-            'city' => 'sometimes|string|max:64',
+            'country' => 'sometimes|nullable|string|max:64',
+            'state' => 'sometimes|nullable|string|max:64',
+            'city' => 'sometimes|nullable|string|max:64',
             'pincode' => 'sometimes|string|max:16',
-            'address' => 'sometimes|string|max:255',
+            'address' => 'sometimes|nullable|string|max:255',
             'latitude' => 'sometimes|string|max:16',
             'longitude' => 'sometimes|string|max:16',
-            'description' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string|max:255',
             'active' => 'sometimes|boolean',
         ];
     }
